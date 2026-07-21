@@ -512,6 +512,12 @@ html.dark .cmp-modal-x{background:#0a2348;border-color:#16386a;color:#bcd0ec}
         <div class="cwrap"><canvas id="mkt-c4"></canvas></div>
       </div>
     </div>
+    <div class="chartbox" id="mkt-rsbox" style="margin-top:14px">
+      <h3 id="mkt-rst">Índice de precios <i>repeat-sales</i> — apreciación real</h3>
+      <p>Compara <b>la misma propiedad consigo misma</b> en dos ventas sucesivas, así que el tamaño, la calidad y la ubicación se cancelan: mide apreciación pura, no cambio de composición. Es el método de los índices Case-Shiller. Base 2015 = 100 y expresado en UF, o sea que <b>la inflación ya está descontada</b>: si la línea queda plana, el precio real no subió.</p>
+      <div class="cwrap"><canvas id="mkt-c5"></canvas></div>
+      <div id="mkt-rsnote" class="mut" style="margin-top:8px;font-size:.9em"></div>
+    </div>
     <div class="chartbox" id="mkt-mapbox" style="margin-top:14px">
       <h3 id="mkt-maptitle">Mapa: precio por m² según zona</h3>
       <p id="mkt-mapsub">Mediana de UF/m² de la vivienda en cada zona censal. Dentro de una misma comuna los precios varían más que entre comunas: aquí se ve dónde. Cambia la variable para ver la <b>plusvalía real</b> (apreciación en UF entre 2015-17 y 2023-25, ya descontada la inflación).</p>
@@ -658,7 +664,7 @@ if(window.Chart){
   Chart.register({id:"authorWM",afterDraw(c){if(c.config.options&&c.config.options.__noWM)return;const a=c.chartArea;if(!a)return;const x=c.ctx;x.save();x.font="600 10px "+F;x.fillStyle="rgba(125,145,170,.55)";x.textAlign="right";x.textBaseline="top";x.fillText("By Rodrigo Medina G.",a.right,a.top+2);x.restore();}});
 }
 </script>
-<script src="app.js?v=36"></script>
+<script src="app.js?v=37"></script>
 <script>
 /* Marco de figura institucional: eyebrow (fuente) + microlínea de fuente en cada figura.
    Solo presentación; no toca datos ni el wiring de los gráficos. */

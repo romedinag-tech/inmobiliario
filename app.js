@@ -717,9 +717,12 @@ function initMercado(){
      document.querySelectorAll("#mkt-mapvar button").forEach(x=>{const on=x===b;
        x.classList.toggle("on",on);x.setAttribute("aria-selected",on?"true":"false");});
      drawMktMap(dataSlug());});
-   return getJSON("data/mercado/kpis_mercado.json?v=1").then(k=>{
-     (S.kpis||[]).forEach(c=>{const m=k[String(c.cut)];if(m)Object.assign(c,m);});
-   });
+   return Promise.all([
+     getJSON("data/mercado/kpis_mercado.json?v=1").then(k=>{
+       (S.kpis||[]).forEach(c=>{const m=k[String(c.cut)];if(m)Object.assign(c,m);});}),
+     // el índice no bloquea el módulo: si falta, la pestaña funciona sin ese gráfico
+     getJSON("data/mercado/repeat_sales.json?v=1").then(d=>{S.rs=d;}).catch(()=>{S.rs=null;})
+   ]);
  }).catch(()=>{mktOn=false;quitarMercado();});}
 const MKT_ANIOS=["2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025"];
 // Las medianas no se suman. Para agregar comunas a un área metropolitana se pondera cada
@@ -791,6 +794,53 @@ function drawMkt(){const d=mktData();
    tooltip:{callbacks:{label:c=>fmtN(c.parsed.y)+" operaciones"}}},
    scales:{y:{title:{display:true,text:"operaciones"},ticks:{callback:v=>fmtN(v)}}}}});
  drawMktMap(dataSlug());
+ drawRepeatSales();
+}
+
+/* ── índice repeat-sales: la selección contra el país ──────────────────────────
+   Un área metropolitana no tiene índice propio: cada comuna se estima por separado.
+   Se promedian sus índices ponderando por número de pares, que es la precisión
+   relativa de cada uno — no por población, que aquí no dice nada. */
+let mktC5=null;
+function drawRepeatSales(){const box=document.getElementById("mkt-rsbox");
+ if(!S.rs){box.style.display="none";return;}
+ const anios=S.rs.meta.anios.map(String), nac=S.rs.nacional, s=S.sel;
+ const cuts=!s?[]:(s.type==="comuna"?[String(s.key)]:(S.metros[s.key]||[]).map(String));
+ const recs=cuts.map(c=>S.rs.comunas[c]).filter(Boolean);
+ let local=null,npares=0;
+ if(recs.length){
+   npares=recs.reduce((a,r)=>a+r.n,0);
+   local=anios.map(a=>{let sw=0,sv=0;
+     recs.forEach(r=>{const v=r.indice[a];if(v!=null){sv+=v*r.n;sw+=r.n;}});
+     return sw>0?+(sv/sw).toFixed(1):null;});
+ }
+ box.style.display="";
+ const nota=document.getElementById("mkt-rsnote");
+ const fin=anios[anios.length-1];
+ if(local){
+   const vl=local[local.length-1], vn=nac[fin];
+   const dif=vl-vn;
+   nota.innerHTML="<b>"+(s.name||"")+"</b>: "+(vl>=100?"+":"")+fmt(vl-100,1)+"% real desde "+anios[0]+
+     " · país "+(vn>=100?"+":"")+fmt(vn-100,1)+"%. "+
+     (Math.abs(dif)<2?"Se movió prácticamente igual que el promedio nacional."
+       :(dif>0?"Se apreció <b>"+fmt(dif,1)+" puntos MÁS</b> que el país."
+              :"Se apreció <b>"+fmt(-dif,1)+" puntos MENOS</b> que el país."))+
+     " Estimado con "+fmtN(npares)+" pares de ventas repetidas"+
+     (recs.length<cuts.length?" ("+recs.length+" de "+cuts.length+" comunas con masa suficiente)":"")+".";
+ } else {
+   nota.innerHTML="Esta selección no alcanza el mínimo de 100 pares de ventas repetidas para "+
+     "un índice propio; se muestra solo el nacional. Un índice con pocos pares es ruido, no señal.";
+ }
+ const ds=[{label:"Chile",data:anios.map(a=>nac[a]),borderColor:GREY,backgroundColor:GREY,
+            borderDash:[5,4],tension:.2,pointRadius:0,borderWidth:2}];
+ if(local)ds.unshift({label:s.name,data:local,borderColor:NAVY,backgroundColor:NAVY,
+            tension:.2,pointRadius:3,borderWidth:3,spanGaps:true});
+ if(mktC5)mktC5.destroy();
+ mktC5=new Chart(document.getElementById("mkt-c5"),{type:"line",data:{labels:anios,datasets:ds},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"},datalabels:{display:false},
+   tooltip:{callbacks:{label:c=>c.dataset.label+": "+fmt(c.parsed.y,1)+
+     "  ("+(c.parsed.y>=100?"+":"")+fmt(c.parsed.y-100,1)+"% real)"}}},
+   scales:{y:{title:{display:true,text:"índice (2015 = 100, en UF)"}}}}});
 }
 
 /* ── mapa zonal de mercado (precio UF/m² · plusvalía real) ────────────────────── */
