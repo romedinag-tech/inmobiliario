@@ -1,6 +1,7 @@
 {
-  "sitio": "inmobiliario",
+  "sitio": "demo",
   "modulos": {
     "mercado": true
-  }
+  },
+  "nivel_mercado": "trabajo"
 }

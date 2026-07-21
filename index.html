@@ -512,6 +512,15 @@ html.dark .cmp-modal-x{background:#0a2348;border-color:#16386a;color:#bcd0ec}
         <div class="cwrap"><canvas id="mkt-c4"></canvas></div>
       </div>
     </div>
+    <div class="chartbox" id="mkt-mapbox" style="margin-top:14px">
+      <h3 id="mkt-maptitle">Mapa: precio por m² según zona</h3>
+      <p id="mkt-mapsub">Mediana de UF/m² de la vivienda en cada zona censal. Dentro de una misma comuna los precios varían más que entre comunas: aquí se ve dónde. Cambia la variable para ver la <b>plusvalía real</b> (apreciación en UF entre 2015-17 y 2023-25, ya descontada la inflación).</p>
+      <div class="seg" id="mkt-mapvar" role="tablist" style="margin:6px 0 10px">
+        <button class="on" data-mv="ufm2" role="tab" aria-selected="true">Precio UF/m²</button>
+        <button data-mv="plus" role="tab" aria-selected="false">Plusvalía real</button>
+      </div>
+      <div id="mkt-map" class="map"></div>
+    </div>
     <div class="note" id="mkt-note" style="margin-top:14px"><b>Metodología:</b> Formulario 2890 del SII (compraventas inscritas), obtenido por Ley de Transparencia, cruzado con el catastro de predios del corte semestral <b>más cercano a la fecha de escritura</b> — así los atributos reflejan el estado del predio a la época de la venta y no el actual. Los montos se convierten a UF con el valor del <b>día de la escritura</b>. Se excluyen operaciones sin monto (donaciones, adjudicaciones y otras no onerosas), montos irrisorios (&lt;50 UF) y atípicos extremos. Solo se publica la mediana de comunas con al menos <b>30 operaciones</b>; bajo ese umbral la mediana no es estable.</div>
   </section>
 
@@ -649,7 +658,7 @@ if(window.Chart){
   Chart.register({id:"authorWM",afterDraw(c){if(c.config.options&&c.config.options.__noWM)return;const a=c.chartArea;if(!a)return;const x=c.ctx;x.save();x.font="600 10px "+F;x.fillStyle="rgba(125,145,170,.55)";x.textAlign="right";x.textBaseline="top";x.fillText("By Rodrigo Medina G.",a.right,a.top+2);x.restore();}});
 }
 </script>
-<script src="app.js?v=35"></script>
+<script src="app.js?v=36"></script>
 <script>
 /* Marco de figura institucional: eyebrow (fuente) + microlínea de fuente en cada figura.
    Solo presentación; no toca datos ni el wiring de los gráficos. */

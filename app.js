@@ -711,6 +711,12 @@ function initMercado(){
    mktOn=!!(cfg&&cfg.modulos&&cfg.modulos.mercado);
    if(!mktOn){quitarMercado();return;}
    Object.assign(KPI,KPI_MERCADO);
+   // toggle del mapa zonal: precio ↔ plusvalía
+   document.querySelectorAll("#mkt-mapvar button").forEach(b=>b.onclick=()=>{
+     mktMapVar=b.dataset.mv;
+     document.querySelectorAll("#mkt-mapvar button").forEach(x=>{const on=x===b;
+       x.classList.toggle("on",on);x.setAttribute("aria-selected",on?"true":"false");});
+     drawMktMap(dataSlug());});
    return getJSON("data/mercado/kpis_mercado.json?v=1").then(k=>{
      (S.kpis||[]).forEach(c=>{const m=k[String(c.cut)];if(m)Object.assign(c,m);});
    });
@@ -784,7 +790,67 @@ function drawMkt(){const d=mktData();
   options:{maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false},
    tooltip:{callbacks:{label:c=>fmtN(c.parsed.y)+" operaciones"}}},
    scales:{y:{title:{display:true,text:"operaciones"},ticks:{callback:v=>fmtN(v)}}}}});
+ drawMktMap(dataSlug());
 }
+
+/* ── mapa zonal de mercado (precio UF/m² · plusvalía real) ────────────────────── */
+let mktMap=null,mktLayer=null,mktLegend=null,mktMapVar="ufm2";
+function ensureMktMap(){if(mktMap)return;
+ mktMap=L.map("mkt-map",{preferCanvas:false}).setView([-36.86,-73.03],11);mapChrome(mktMap);}
+function drawMktMap(slug){const box=document.getElementById("mkt-mapbox");
+ if(!slug){box.style.display="none";return;}
+ S.mktZcache=S.mktZcache||{};
+ const geoP=S.zonasCache[slug]?Promise.resolve(S.zonasCache[slug]):getJSON("data/zonas/"+slug+".geojson?v=5").then(g=>{S.zonasCache[slug]=g.features;return g.features;});
+ const mzP=(slug in S.mktZcache)?Promise.resolve(S.mktZcache[slug]):getJSON("data/mercado/zonas/"+slug+".json?v=1").then(d=>{S.mktZcache[slug]=d;return d;}).catch(()=>{S.mktZcache[slug]=null;return null;});
+ Promise.all([geoP,mzP]).then(([gf,d])=>{
+  if(!d){box.style.display="none";return;}
+  box.style.display="";
+  const feats=gf.map(f=>{const za=String(f.properties.zona),z=d[za];
+    return {type:"Feature",geometry:f.geometry,properties:{zona:za,comuna:f.properties.comuna,
+      n:z?z.n:null,uf:z?z.uf:null,ufm2:z?z.ufm2:null,plus:z?(z.plus!=null?z.plus:null):null,
+      plus_tipo:z?z.plus_tipo:null}};});
+  ensureMktMap();
+  if(mktLayer){mktMap.removeLayer(mktLayer);mktLayer=null;}
+  if(mktLegend){mktMap.removeControl(mktLegend);mktLegend=null;}
+  const esPlus=mktMapVar==="plus";
+  // plusvalía: rampa DIVERGENTE con cero neutro. Convención de precios: ROJO baja, gris ~0,
+  // VERDE sube (no reusar R.RdYlGn, que quedó reasignada a azul-rojo). Precio: secuencial YlOrRd.
+  const RAMPA_PLUS=["#c0392b","#e59866","#f2f2f2","#7dcea0","#1e8449"];
+  const cols=esPlus?RAMPA_PLUS:R.YlOrRd;
+  const vals=feats.map(f=>f.properties[mktMapVar]);
+  const brk=esPlus?[-10,0,20,45,80]:quant(vals.filter(v=>v!=null),false);
+  const colFor=esPlus
+    ? x=>x==null?"#d8dde3":(x<brk[0]?cols[0]:x<brk[1]?cols[1]:x<brk[2]?cols[2]:x<brk[3]?cols[3]:cols[4])
+    : x=>colorFor(x,brk,cols,false);
+  mktLayer=L.geoJSON({type:"FeatureCollection",features:feats},{
+   style:f=>({color:"#5b6b7b",weight:.5,fillColor:colFor(f.properties[mktMapVar]),fillOpacity:.82}),
+   onEachFeature:(f,l)=>{const p=f.properties;
+    l.on("mouseover",()=>l.setStyle({weight:2,color:"#1F6FEB"}));
+    l.on("mouseout",()=>l.setStyle({weight:.5,color:"#5b6b7b"}));
+    l.bindPopup('<b>Zona '+p.zona+'</b> · '+titleCase(p.comuna)+'<br>'+
+      (p.n!=null?'':'sin operaciones suficientes')+
+      (p.ufm2!=null?'Precio: <b>'+fmt(p.ufm2,1)+' UF/m²</b><br>':'')+
+      (p.uf!=null?'Mediana: '+fmtN(p.uf)+' UF<br>':'')+
+      (p.plus!=null?'Plusvalía real: <b>'+(p.plus>=0?'+':'')+fmt(p.plus,1)+'%</b> ('+(p.plus_tipo||'')+')<br>':'')+
+      (p.n!=null?'<span class="mut">'+fmtN(p.n)+' operaciones</span>':''));}
+  }).addTo(mktMap);
+  if(mktLayer.getBounds().isValid())mktMap.fitBounds(mktLayer.getBounds(),{padding:[10,10]});
+  mktLegend=L.control({position:"bottomright"});
+  mktLegend.onAdd=()=>{const dd=L.DomUtil.create("div","legend");
+   let h;
+   if(esPlus){h='<b>Plusvalía real 2015-17 → 2023-25</b><br>'+
+     '<i style="background:'+cols[0]+'"></i>baja (&lt; '+brk[0]+'%)<br>'+
+     '<i style="background:'+cols[1]+'"></i>'+brk[0]+' – '+brk[1]+'%<br>'+
+     '<i style="background:'+cols[2]+'"></i>'+brk[1]+' – '+brk[2]+'%<br>'+
+     '<i style="background:'+cols[3]+'"></i>'+brk[2]+' – '+brk[3]+'%<br>'+
+     '<i style="background:'+cols[4]+'"></i>&gt; '+brk[3]+'%<br>';
+   }else{h='<b>Precio (UF/m² construido)</b><br><i style="background:'+cols[0]+'"></i>≤ '+fmt(brk[0],0)+'<br>';
+     for(let i=1;i<brk.length;i++)h+='<i style="background:'+cols[i]+'"></i>'+fmt(brk[i-1],0)+' – '+fmt(brk[i],0)+'<br>';
+     h+='<i style="background:'+cols[4]+'"></i>&gt; '+fmt(brk[4],0)+'<br>';}
+   h+='<i style="background:#d8dde3"></i>s/d';dd.innerHTML=h;return dd;};
+  mktLegend.addTo(mktMap);
+  setTimeout(()=>mktMap.invalidateSize(),60);
+ }).catch(()=>{box.style.display="none";});}
 
 function ecoSeries(){const s=S.sel;if(!s||!S.eco)return null;
  if(s.type==="comuna"){const r=S.eco[s.key];return r?{t:r.t,avaluo:r.avaluo_mm,contrib:r.contrib_mm,npred:r.npred,proj_t:r.proj_t,proj:r.proj_avaluo_mm,members:[s.key]}:null;}
@@ -1659,7 +1725,7 @@ function activateTab(t){
  if(t==="movilidad"){renderMovilidad();if(mvMap)setTimeout(()=>{mvMap.invalidateSize();if(mvLayer&&mvLayer.getBounds().isValid())mvMap.fitBounds(mvLayer.getBounds(),{padding:[10,10]});},80);
   if(mvOdMap)setTimeout(()=>mvOdMap.invalidateSize(),100);}
  if(t==="economia"){renderEconomia();if(ecoMap)setTimeout(()=>{ecoMap.invalidateSize();if(ecoLayer&&ecoLayer.getBounds().isValid())ecoMap.fitBounds(ecoLayer.getBounds(),{padding:[10,10]});},80);}
- if(t==="mercado")renderMercado();
+ if(t==="mercado"){renderMercado();if(mktMap)setTimeout(()=>{mktMap.invalidateSize();if(mktLayer&&mktLayer.getBounds().isValid())mktMap.fitBounds(mktLayer.getBounds(),{padding:[10,10]});},80);}
  if(t==="tend-demo")lazyFrame("if-demo");
  if(t==="tend-suelo")lazyFrame("if-suelo");
  writeURL();
