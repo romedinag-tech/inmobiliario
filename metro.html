@@ -8,7 +8,30 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="tokens.css?v=1"/>
 <link rel="stylesheet" href="theme.css?v=3"/>
+<script>
+/* El tema lo aplica app.js en el visor, y esta página no lo carga: sin esto se queda con los
+   tokens claros y el color de texto por defecto del navegador (negro), que sobre un fondo
+   oscuro heredado resulta ilegible. Se deduce el tema del documento padre cuando va embebida,
+   y de la preferencia del sistema cuando se abre sola. Va en el <head> para evitar el parpadeo. */
+(function(){
+  function oscuro(){
+    try{ if(window.parent!==window && parent.document)
+      return parent.document.documentElement.classList.contains('dark'); }catch(e){}
+    return matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function aplicar(){ document.documentElement.classList.toggle('dark', oscuro()); }
+  aplicar();
+  // si el visor cambia de tema con la página abierta, seguirlo
+  try{ if(window.parent!==window && parent.document)
+    new MutationObserver(aplicar).observe(parent.document.documentElement,
+      {attributes:true, attributeFilter:['class']}); }catch(e){}
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', aplicar);
+  window.__temaOscuro=oscuro;
+})();
+</script>
 <style>
+  /* explícitos: sin esto el fondo queda transparente y el texto en el negro por defecto */
+  html,body{background:var(--paper);color:var(--ink)}
   .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
   .hero{border-bottom:2px solid var(--navy);padding-bottom:18px;margin-bottom:26px}
   .hero h1{margin:0 0 10px;font-size:2.1rem;line-height:1.15}
@@ -25,6 +48,13 @@
   th:first-child,td:first-child{text-align:left}
   thead th{border-bottom:2px solid var(--line-2);font-size:.88rem;color:var(--mut)}
   .pos{color:#1e8449;font-weight:600} .neg{color:#c0392b;font-weight:600} .nulo{color:var(--mut)}
+  /* en oscuro el verde y el rojo institucionales quedan casi negros: se aclaran */
+  html.dark .pos{color:#5ed99a} html.dark .neg{color:#ff7a6b}
+  html.dark .hero .sub,html.dark .q p,html.dark .nota{color:var(--ink-mid,#8a93a5)}
+  html.dark .hallazgo{background:var(--surface-alt);border-left-color:var(--navy)}
+  .seg button{background:var(--surface);color:var(--ink);border:1px solid var(--line);
+    padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit;font-size:.9rem}
+  .seg button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cw{height:300px;margin:14px 0}
   .nota{background:var(--surface);border:1px solid var(--line);border-radius:8px;
         padding:14px 16px;margin:18px 0;font-size:.93rem;line-height:1.5}
@@ -211,6 +241,11 @@
 Chart.defaults.animation=false;
 Chart.defaults.animations={};
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// ejes, leyendas y grilla en los colores del tema: por defecto Chart.js usa gris oscuro fijo,
+// invisible sobre fondo negro
+Chart.defaults.color=cssv('--ink')||'#0E2338';
+Chart.defaults.borderColor=cssv('--line')||'#e3e8ef';
+Chart.defaults.font.family=getComputedStyle(document.body).fontFamily;
 const NAVY=cssv('--navy')||'#16365a', OR=cssv('--or')||'#C55A11',
       GREY=cssv('--mut-2')||'#7C8AA0', GREEN='#1e8449', RED='#c0392b';
 const f1=x=>(x==null?'—':(x>=0?'+':'')+x.toFixed(1)+'%');

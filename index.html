@@ -490,7 +490,7 @@ html.dark .cmp-modal-x{background:#0a2348;border-color:#16386a;color:#bcd0ec}
     <p class="lead" id="mkt-lead">Precio <b>efectivamente pagado</b> en las compraventas inscritas ante el SII, 2015–2025, expresado en <b>UF del día de la escritura</b>. No son precios pedidos en portales: son operaciones cerradas.</p>
     <div id="mkt-kpis"></div>
     <div class="note" id="mkt-metro-link" style="margin:10px 0 4px">
-      <b>Análisis especial:</b> <a href="metro.html">¿Cuánto vale el Metro?</a> — efecto de la red
+      <b>Análisis especial:</b> <a href="metro.html?v=2">¿Cuánto vale el Metro?</a> — efecto de la red
       de Metro sobre el valor del suelo y la densidad en el Gran Santiago, con las 828 mil
       compraventas del período y las 44 estaciones anunciadas que aún no operan como control.
     </div>
@@ -645,9 +645,9 @@ html.dark .cmp-modal-x{background:#0a2348;border-color:#16386a;color:#bcd0ec}
     828.161 compraventas efectivas 2015-2025 y los dos censos a nivel de manzana. Incluye las
     <b>44 estaciones anunciadas que aún no operan</b> como grupo de control.
     <b>Este análisis cubre solo el Gran Santiago</b>, que es la única ciudad del país con red de Metro.</p>
-    <iframe class="tendframe" id="if-metro" data-src="metro.html" title="Análisis del Metro: impacto en el uso de suelo" loading="lazy"></iframe>
+    <iframe class="tendframe" id="if-metro" data-src="metro.html?v=2" title="Análisis del Metro: impacto en el uso de suelo" loading="lazy"></iframe>
     <div class="note" style="margin-top:12px">¿Prefieres verlo en pantalla completa?
-      <a href="metro.html" target="_blank" rel="noopener">Abrir el análisis en una pestaña nueva</a>.</div>
+      <a href="metro.html?v=2" target="_blank" rel="noopener">Abrir el análisis en una pestaña nueva</a>.</div>
   </section>
 
 </main>
@@ -682,7 +682,7 @@ if(window.Chart){
   Chart.register({id:"authorWM",afterDraw(c){if(c.config.options&&c.config.options.__noWM)return;const a=c.chartArea;if(!a)return;const x=c.ctx;x.save();x.font="600 10px "+F;x.fillStyle="rgba(125,145,170,.55)";x.textAlign="right";x.textBaseline="top";x.fillText("By Rodrigo Medina G.",a.right,a.top+2);x.restore();}});
 }
 </script>
-<script src="app.js?v=39"></script>
+<script src="app.js?v=40"></script>
 <script>
 /* Marco de figura institucional: eyebrow (fuente) + microlínea de fuente en cada figura.
    Solo presentación; no toca datos ni el wiring de los gráficos. */
