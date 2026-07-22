@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>¿Cuánto vale el Metro? · Impacto en el uso de suelo — Gran Santiago</title>
+<meta name="description" content="Efecto del Metro de Santiago sobre el valor del suelo y la densidad, medido con 828.161 compraventas efectivas 2015-2025."/>
+<link rel="stylesheet" href="tokens.css?v=1"/>
+<link rel="stylesheet" href="theme.css?v=3"/>
+<style>
+  .wrap{max-width:1100px;margin:0 auto;padding:28px 20px 80px}
+  .hero{border-bottom:2px solid var(--navy);padding-bottom:18px;margin-bottom:26px}
+  .hero h1{margin:0 0 10px;font-size:2.1rem;line-height:1.15}
+  .hero .sub{color:var(--mut);font-size:1.05rem;max-width:70ch}
+  .q{margin:38px 0 0;padding-top:22px;border-top:1px solid var(--line)}
+  .q h2{margin:0 0 4px;font-size:1.35rem}
+  .q .pregunta{color:var(--navy);font-weight:600;margin:0 0 10px}
+  .q p{max-width:78ch;line-height:1.55}
+  .hallazgo{background:var(--surface-alt);border-left:4px solid var(--navy);
+            padding:14px 16px;margin:16px 0;border-radius:0 6px 6px 0}
+  .hallazgo b{color:var(--navy)}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-variant-numeric:tabular-nums}
+  th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right}
+  th:first-child,td:first-child{text-align:left}
+  thead th{border-bottom:2px solid var(--line-2);font-size:.88rem;color:var(--mut)}
+  .pos{color:#1e8449;font-weight:600} .neg{color:#c0392b;font-weight:600} .nulo{color:var(--mut)}
+  .cw{height:300px;margin:14px 0}
+  .nota{background:var(--surface);border:1px solid var(--line);border-radius:8px;
+        padding:14px 16px;margin:18px 0;font-size:.93rem;line-height:1.5}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:18px 0}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px}
+  .kpi .v{font-size:1.6rem;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:.85rem;color:var(--mut);margin-top:3px}
+  .volver{display:inline-block;margin-bottom:16px;color:var(--navy);text-decoration:none;font-size:.92rem}
+  .volver:hover{text-decoration:underline}
+  @media(max-width:640px){.hero h1{font-size:1.6rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="volver" href="index.html">← Volver al visor</a>
+
+  <div class="hero">
+    <h1>¿Cuánto vale el Metro?</h1>
+    <p class="sub">Efecto de la red de Metro sobre el <b>valor del suelo</b> y la <b>densidad</b> en el Gran Santiago,
+    medido con <b id="n-ventas">—</b> compraventas efectivamente inscritas entre 2015 y 2025.
+    No son precios pedidos: son operaciones cerradas ante el SII.</p>
+  </div>
+
+  <div class="nota">
+    <b>El problema que hay que resolver primero.</b> Comparar el precio de lugares con y sin
+    Metro no mide el Metro. Vitacura es cara y no tiene estación; Puente Alto tiene varias y es
+    barata. Esa comparación captura ingreso, centralidad y prestigio, todo mezclado.
+    <br><br>
+    <b>La salida es comparar cambios, no niveles.</b> Que Vitacura sea cara es una característica
+    fija del lugar: si miramos <i>cuánto cambió</i> el precio, esa característica se cancela sola.
+    Y cada anillo cercano a una estación se compara contra el anillo lejano <b>de su propia comuna</b>,
+    de modo que lo que sobra es la accesibilidad y no el barrio.
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <!-- H1 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 1</p>
+    <h2>¿Cuánto vale estar cerca del Metro?</h2>
+    <p>Sobreprecio por m² construido según distancia caminable a la estación más cercana,
+    comparando cada anillo contra el sector a más de 1.500 m <b>de la misma comuna</b>.
+    Los cortes de 400 y 800 m corresponden a 5 y 10 minutos a pie.</p>
+    <div class="cw"><canvas id="c1"></canvas></div>
+    <table id="t1"></table>
+    <div class="hallazgo" id="h1-txt"></div>
+  </section>
+
+  <!-- H2 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 2</p>
+    <h2>¿Subió el suelo donde llegó el Metro?</h2>
+    <p>La Línea 6 (nov-2017) y la Línea 3 (ene-2019) se inauguraron <b>dentro</b> del período que
+    observamos, así que tienen antes y después reales. Se compara cuánto subió el sector cercano
+    contra cuánto subió el lejano en el mismo lapso: la diferencia entre ambas variaciones es el
+    efecto atribuible, ya descontado el ciclo inmobiliario general.</p>
+    <div class="cw"><canvas id="c2"></canvas></div>
+    <table id="t2"></table>
+    <div class="hallazgo" id="h2-txt"></div>
+  </section>
+
+  <!-- H3 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 3 — la prueba decisiva</p>
+    <h2>¿Se capitaliza el anuncio antes de que exista la estación?</h2>
+    <p>El 1 de junio de 2018, en su Cuenta Pública, el Presidente Piñera anunció las Líneas 7, 8 y 9:
+    <b>44 estaciones nuevas</b> que hasta hoy no operan. Están trazadas, anunciadas y ubicadas, pero
+    sin servicio. Eso permite aplicar exactamente la misma medición a estaciones que no existen.</p>
+    <p>La lectura depende de <b>cuándo</b> aparece la diferencia: si el sobreprecio surge
+    <i>después</i> del anuncio, el mercado capitaliza la promesa; si <i>ya estaba antes</i>,
+    entonces el Metro se planifica donde el valor ya era alto — y parte de lo que se le atribuye
+    al Metro en la red antigua es en realidad esa selección.</p>
+    <div class="cw"><canvas id="c3"></canvas></div>
+    <div class="hallazgo" id="h3-txt"></div>
+  </section>
+
+  <!-- H4 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 4</p>
+    <h2>¿Densifica o solo encarece?</h2>
+    <p>Composición de lo que se vende en cada anillo: qué proporción son departamentos y qué tan
+    reciente es la construcción. Distingue si alrededor del Metro se construyó ciudad nueva o si
+    solamente subió el precio de lo que ya estaba.</p>
+    <div class="cw"><canvas id="c4"></canvas></div>
+    <table id="t4"></table>
+    <div class="hallazgo" id="h4-txt"></div>
+  </section>
+
+  <section class="q">
+    <h2>Cómo leer estos resultados</h2>
+    <div class="nota" id="metodo"></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NAVY=cssv('--navy')||'#16365a', OR=cssv('--or')||'#C55A11',
+      GREY=cssv('--mut-2')||'#7C8AA0', GREEN='#1e8449', RED='#c0392b';
+const f1=x=>(x==null?'—':(x>=0?'+':'')+x.toFixed(1)+'%');
+const cls=x=>x==null?'nulo':(x>0.5?'pos':(x<-0.5?'neg':'nulo'));
+const fN=x=>x==null?'—':x.toLocaleString('es-CL');
+
+fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
+ const A=D.meta.anillos;
+ document.getElementById('n-ventas').textContent=fN(D.meta.ventas);
+
+ document.getElementById('kpis').innerHTML=[
+   [fN(D.meta.estaciones_operativas),'estaciones en operación'],
+   [fN(D.meta.estaciones_anunciadas),'anunciadas, aún sin operar'],
+   [f1(D.h1_por_tipo.Departamento['0-400 m'].sobreprecio_pct),'sobreprecio depto a &lt;400 m'],
+   [f1(D.h1_por_tipo.Casa['0-400 m'].sobreprecio_pct),'sobreprecio casa a &lt;400 m']
+ ].map(([v,l])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+ /* ---- H1 ---- */
+ const g=a=>D.h1_gradiente[a].sobreprecio_pct,
+       gd=a=>(D.h1_por_tipo.Departamento[a]||{}).sobreprecio_pct,
+       gc=a=>(D.h1_por_tipo.Casa[a]||{}).sobreprecio_pct;
+ new Chart(document.getElementById('c1'),{type:'bar',
+  data:{labels:A,datasets:[
+   {label:'Departamento',data:A.map(gd),backgroundColor:NAVY},
+   {label:'Casa',data:A.map(gc),backgroundColor:OR}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+   tooltip:{callbacks:{label:c=>c.dataset.label+': '+f1(c.parsed.y)}}},
+   scales:{y:{title:{display:true,text:'sobreprecio vs >1500 m de la misma comuna'},
+     ticks:{callback:v=>v+'%'}}}}});
+ document.getElementById('t1').innerHTML=
+  '<thead><tr><th>Anillo</th><th>Total</th><th>Departamento</th><th>Casa</th><th>Ventas</th></tr></thead><tbody>'+
+  A.map(a=>`<tr><td>${a}</td><td class="${cls(g(a))}">${f1(g(a))}</td>`+
+   `<td class="${cls(gd(a))}">${f1(gd(a))}</td><td class="${cls(gc(a))}">${f1(gc(a))}</td>`+
+   `<td>${fN(D.h1_gradiente[a].ventas)}</td></tr>`).join('')+'</tbody>';
+ document.getElementById('h1-txt').innerHTML=
+  `<b>El premio del Metro es un fenómeno de departamentos.</b> A menos de 400 m un departamento se
+   paga ${f1(gd('0-400 m'))} más por m² que en el sector alejado de su propia comuna, mientras que
+   una casa apenas ${f1(gc('0-400 m'))}. Quien compra departamento junto a una estación está
+   comprando accesibilidad; quien compra casa suele tener auto y valora otras cosas.
+   <br><br>El efecto además <b>se agota entre los 800 y 1.500 m</b> — justo donde deja de ser
+   caminable. Ese desvanecimiento no se impuso: salió del dato, y es lo que respalda haber
+   elegido 400 y 800 m como cortes.`;
+
+ /* ---- H2 ---- */
+ const L=Object.keys(D.h2_apertura);
+ new Chart(document.getElementById('c2'),{type:'bar',
+  data:{labels:L.map(l=>l+(l==='L6'?' (nov 2017)':' (ene 2019)')),datasets:[
+   {label:'Subió el sector cercano',data:L.map(l=>D.h2_apertura[l].cambio_cerca_pct),backgroundColor:NAVY},
+   {label:'Subió el sector lejano (control)',data:L.map(l=>D.h2_apertura[l].cambio_lejos_pct),backgroundColor:GREY},
+   {label:'Efecto atribuible',data:L.map(l=>D.h2_apertura[l].efecto_pct),backgroundColor:GREEN}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+   tooltip:{callbacks:{label:c=>c.dataset.label+': '+f1(c.parsed.y)}}},
+   scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+ document.getElementById('t2').innerHTML=
+  '<thead><tr><th>Línea</th><th>Cercano</th><th>Lejano</th><th>Efecto</th><th>Ventas cerca</th></tr></thead><tbody>'+
+  L.map(l=>{const v=D.h2_apertura[l];return `<tr><td>${l}</td><td>${f1(v.cambio_cerca_pct)}</td>`+
+   `<td>${f1(v.cambio_lejos_pct)}</td><td class="${cls(v.efecto_pct)}">${f1(v.efecto_pct)}</td>`+
+   `<td>${fN(v.cerca_antes+v.cerca_despues)}</td></tr>`;}).join('')+'</tbody>';
+ const pt=(D.h2_apertura.L6||{}).tendencia_previa||[];
+ document.getElementById('h2-txt').innerHTML=
+  `<b>El efecto de la inauguración es pequeño: ${f1(D.h2_apertura.L6?.efecto_pct)} en L6 y
+   ${f1(D.h2_apertura.L3?.efecto_pct)} en L3.</b> No es un error de medición, es lo esperable:
+   ambas líneas se anunciaron entre 2009 y 2012, así que para cuando empiezan nuestros datos el
+   mercado llevaba años sabiendo que el Metro venía. Lo que medimos acá es el efecto del
+   <i>servicio</i>, no el de la <i>noticia</i>.
+   <br><br><b>Verificación de tendencias previas:</b> antes de abrir, la brecha entre cercano y
+   lejano se mantuvo estable (${pt.map(p=>p.anio+': '+p.dif_pct+'%').join(' · ')}), sin
+   separarse progresivamente. Eso es lo que habilita leer el cambio posterior como efecto y no
+   como continuación de una tendencia que ya venía.`;
+
+ /* ---- H3 ---- */
+ const S=D.h3_anticipacion.serie;
+ new Chart(document.getElementById('c3'),{type:'line',
+  data:{labels:S.map(s=>s.anio),datasets:[
+   {label:'Sobreprecio junto a estaciones anunciadas (aún sin operar)',
+    data:S.map(s=>s.dif_pct),borderColor:OR,backgroundColor:OR,tension:.2,borderWidth:3,pointRadius:4}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+   tooltip:{callbacks:{label:c=>f1(c.parsed.y)}}},
+   scales:{y:{title:{display:true,text:'sobreprecio vs sector sin Metro ni proyecto'},
+     ticks:{callback:v=>v+'%'}}}}});
+ const H3=D.h3_anticipacion;
+ document.getElementById('h3-txt').innerHTML=
+  `<b>El sobreprecio ya existía antes del anuncio: ${f1(H3.brecha_antes_pct)}.</b>
+   Y el anuncio en sí no agregó nada medible (${f1(H3.efecto_pct)}).
+   <br><br>La conclusión es incómoda pero es la más importante del ejercicio: <b>el Metro se
+   planifica donde el valor y la densidad ya son altos</b>, no al revés. Por eso una parte del
+   sobreprecio que la Pregunta 1 muestra junto a la red existente no es efecto del Metro, sino
+   el reflejo de que el Metro fue trazado por los corredores que ya concentraban actividad.
+   Separar ambas cosas exige justamente comparaciones antes/después como la Pregunta 2, no
+   fotografías de un momento.
+   <br><br><i>Cautela:</i> la serie es ruidosa (va de ${Math.min(...S.map(s=>s.dif_pct)).toFixed(1)}%
+   a ${Math.max(...S.map(s=>s.dif_pct)).toFixed(1)}% entre años), porque el grupo cercano a
+   estaciones futuras y lejano de la red actual es acotado. La magnitud exacta no es confiable;
+   el hecho de que la brecha preexista, sí.`;
+
+ /* ---- H4 ---- */
+ new Chart(document.getElementById('c4'),{type:'bar',
+  data:{labels:A,datasets:[
+   {label:'% departamentos',data:A.map(a=>(D.h4_densidad[a]||{}).pct_departamento),backgroundColor:NAVY},
+   {label:'% obra de 2010 en adelante',data:A.map(a=>(D.h4_densidad[a]||{}).pct_obra_2010mas),backgroundColor:OR}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+   tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y+'%'}}},
+   scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+ document.getElementById('t4').innerHTML=
+  '<thead><tr><th>Anillo</th><th>% departamento</th><th>% obra 2010+</th><th>Año construcción mediano</th><th>Ventas</th></tr></thead><tbody>'+
+  A.map(a=>{const v=D.h4_densidad[a];if(!v)return '';
+   return `<tr><td>${a}</td><td>${v.pct_departamento}%</td><td>${v.pct_obra_2010mas}%</td>`+
+    `<td>${v.anio_construccion_mediano}</td><td>${fN(v.ventas)}</td></tr>`;}).join('')+'</tbody>';
+ const d0=D.h4_densidad['0-400 m'], d3=D.h4_densidad['>1500 m'];
+ document.getElementById('h4-txt').innerHTML=
+  `<b>Densifica, y de forma marcada.</b> A menos de 400 m de una estación, el
+   ${d0.pct_departamento}% de lo que se vende son departamentos y el ${d0.pct_obra_2010mas}% se
+   construyó de 2010 en adelante; el año de construcción mediano es
+   <b>${d0.anio_construccion_mediano}</b>. Más allá de 1.500 m esas cifras caen a
+   ${d3.pct_departamento}%, ${d3.pct_obra_2010mas}% y <b>${d3.anio_construccion_mediano}</b>.
+   <br><br>Una diferencia de ${d0.anio_construccion_mediano-d3.anio_construccion_mediano} años en
+   la edad de lo que se transa es mucho: alrededor de las estaciones no solo subió el precio de lo
+   existente, se construyó ciudad nueva y más densa. Con la salvedad de la Pregunta 3: parte de
+   esa densidad es previa al Metro y explica por dónde se trazó.`;
+
+ document.getElementById('metodo').innerHTML=
+  `<b>Datos.</b> ${fN(D.meta.ventas)} compraventas de vivienda inscritas ante el SII en las 34
+   comunas del Gran Santiago, 2015-2025, obtenidas por Ley de Transparencia, georreferenciadas
+   por predio y expresadas en UF del día de la escritura — es decir, <b>libres de inflación</b>.
+   Red de Metro: ${D.meta.estaciones_operativas} estaciones en operación y
+   ${D.meta.estaciones_anunciadas} anunciadas el ${D.meta.anuncio_789}.
+   <br><br><b>Qué sostiene la comparación.</b> Cada anillo se contrasta contra el sector a más de
+   1.500 m <b>de su propia comuna</b>, lo que neutraliza todo lo que distingue a una comuna de otra.
+   El gradiente se calcula además <b>dentro de cada tipo de propiedad</b>, porque cerca del Metro
+   se vende mayoritariamente departamento y lejos mayoritariamente casa: sin esa separación, la
+   distinta mezcla de productos se confundiría con el efecto del Metro.
+   <br><br><b>Qué NO permite concluir.</b> Las Preguntas 1 y 4 son fotografías de un momento y no
+   distinguen causa de selección. Solo la Pregunta 2 —antes y después de una inauguración, con
+   verificación de tendencias previas— admite lectura causal, y su magnitud es modesta. La
+   Pregunta 3 muestra por qué esa distinción importa.`;
+}).catch(e=>{
+ document.querySelector('.wrap').insertAdjacentHTML('beforeend',
+  '<div class="nota">No se pudieron cargar los datos del análisis.</div>');
+});
+</script>
+</body>
+</html>
