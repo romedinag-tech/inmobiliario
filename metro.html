@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>¿Cuánto vale el Metro? · Impacto en el uso de suelo — Gran Santiago</title>
 <meta name="description" content="Efecto del Metro de Santiago sobre el valor del suelo y la densidad, medido con 828.161 compraventas efectivas 2015-2025."/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <link rel="stylesheet" href="tokens.css?v=1"/>
 <link rel="stylesheet" href="theme.css?v=3"/>
 <style>
@@ -59,6 +60,21 @@
   </div>
 
   <div class="kpis" id="kpis"></div>
+
+  <!-- MAPA -->
+  <section class="q">
+    <h2>La red y sus anillos</h2>
+    <p>Cada estación con su radio caminable: <b>400 m</b> (5 minutos) y <b>800 m</b> (10 minutos).
+    Las estaciones en gris con borde punteado son las <b>44 anunciadas que aún no operan</b>
+    — las que sirven de control en la Pregunta 3.</p>
+    <div class="seg" id="mapvar" style="margin:6px 0 10px">
+      <button class="on" data-mv="todas">Toda la red</button>
+      <button data-mv="op">Solo en operación</button>
+      <button data-mv="an">Solo anunciadas</button>
+    </div>
+    <div id="map" style="height:520px;border:1px solid var(--line);border-radius:8px"></div>
+    <div class="hallazgo" id="map-txt"></div>
+  </section>
 
   <!-- H1 -->
   <section class="q">
@@ -145,6 +161,7 @@
   </section>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -164,6 +181,54 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    [f1(D.h1_por_tipo.Departamento['0-400 m'].sobreprecio_pct),'sobreprecio depto a &lt;400 m'],
    [f1(D.h1_por_tipo.Casa['0-400 m'].sobreprecio_pct),'sobreprecio casa a &lt;400 m']
  ].map(([v,l])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+
+ /* ---- MAPA: red + anillos caminables ---- */
+ // colores de las líneas del Metro, para que el mapa se lea sin leyenda
+ const LC={L1:'#D8262C',L2:'#F5B335',L3:'#6E4B3A',L4:'#1E4B9B',L4A:'#4FB3E8',
+           L5:'#2E9E5B',L6:'#7B3F9D',L7:'#E87722',L8:'#9AA3AE',L9:'#9AA3AE'};
+ const map=L.map('map',{scrollWheelZoom:false}).setView([-33.45,-70.66],11);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+   {attribution:'© OpenStreetMap · © CARTO',maxZoom:18}).addTo(map);
+ const capa=L.layerGroup().addTo(map);
+ function pintar(modo){
+  capa.clearLayers();
+  const sel=D.estaciones.filter(s=>modo==='todas'||(modo==='op'?s.e===1:s.e===0));
+  // los anillos primero, para que los puntos queden encima
+  sel.forEach(s=>{
+   const col=LC[s.l]||'#888', opera=s.e===1;
+   L.circle([s.y,s.x],{radius:800,color:col,weight:0,fillColor:col,
+     fillOpacity:opera?.06:.04}).addTo(capa);
+   L.circle([s.y,s.x],{radius:400,color:col,weight:opera?1:1,
+     dashArray:opera?null:'3,3',fillColor:col,fillOpacity:opera?.16:.08}).addTo(capa);
+  });
+  sel.forEach(s=>{
+   const col=LC[s.l]||'#888', opera=s.e===1;
+   L.circleMarker([s.y,s.x],{radius:4,color:opera?'#fff':col,weight:opera?1.5:1.5,
+     dashArray:opera?null:'2,2',fillColor:opera?col:'#fff',fillOpacity:1})
+    .bindPopup(`<b>${s.n||'(sin nombre)'}</b><br>Línea ${s.l.replace('L','')}<br>`+
+      (opera?'<span style="color:#1e8449">en operación</span>'
+            :'<span style="color:#c0392b">anunciada, aún sin operar</span>'))
+    .addTo(capa);
+  });
+  if(sel.length){
+   const b=L.latLngBounds(sel.map(s=>[s.y,s.x]));
+   map.fitBounds(b,{padding:[24,24]});
+  }
+ }
+ pintar('todas');
+ document.querySelectorAll('#mapvar button').forEach(b=>b.onclick=()=>{
+   document.querySelectorAll('#mapvar button').forEach(x=>x.classList.toggle('on',x===b));
+   pintar(b.dataset.mv);});
+ const nOp=D.estaciones.filter(s=>s.e===1).length;
+ document.getElementById('map-txt').innerHTML=
+  `<b>Mirando el mapa se entiende por qué la comparación tiene que ser dentro de cada comuna.</b>
+   Las ${nOp} estaciones en operación no están repartidas al azar: siguen los ejes históricos de
+   mayor densidad y actividad. Comparar lo que rodea a esas estaciones contra el resto de la
+   ciudad mezclaría el efecto del Metro con la razón por la que el Metro pasa justamente por ahí.
+   <br><br>Fíjate además en cuánto se superponen los anillos en el centro y el pericentro: allí
+   casi todo el suelo está a menos de 800 m de alguna estación, y por eso esas comunas casi no
+   aportan "sector lejano" con el cual contrastar. Las comparaciones intracomunales de la
+   Pregunta 6 se sostienen sobre todo en las comunas donde sí existen ambos mundos.`;
 
  /* ---- H1 ---- */
  const g=a=>D.h1_gradiente[a].sobreprecio_pct,
@@ -192,18 +257,20 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    elegido 400 y 800 m como cortes.`;
 
  /* ---- H2 ---- */
- const L=Object.keys(D.h2_apertura);
+ // NO llamar 'L' a esta variable: ensombrecería la L global de Leaflet en todo este ámbito
+ // (zona muerta temporal) y el mapa de más arriba dejaría de funcionar.
+ const LIN=Object.keys(D.h2_apertura);
  new Chart(document.getElementById('c2'),{type:'bar',
-  data:{labels:L.map(l=>l+(l==='L6'?' (nov 2017)':' (ene 2019)')),datasets:[
-   {label:'Subió el sector cercano',data:L.map(l=>D.h2_apertura[l].cambio_cerca_pct),backgroundColor:NAVY},
-   {label:'Subió el sector lejano (control)',data:L.map(l=>D.h2_apertura[l].cambio_lejos_pct),backgroundColor:GREY},
-   {label:'Efecto atribuible',data:L.map(l=>D.h2_apertura[l].efecto_pct),backgroundColor:GREEN}]},
+  data:{labels:LIN.map(l=>l+(l==='L6'?' (nov 2017)':' (ene 2019)')),datasets:[
+   {label:'Subió el sector cercano',data:LIN.map(l=>D.h2_apertura[l].cambio_cerca_pct),backgroundColor:NAVY},
+   {label:'Subió el sector lejano (control)',data:LIN.map(l=>D.h2_apertura[l].cambio_lejos_pct),backgroundColor:GREY},
+   {label:'Efecto atribuible',data:LIN.map(l=>D.h2_apertura[l].efecto_pct),backgroundColor:GREEN}]},
   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
    tooltip:{callbacks:{label:c=>c.dataset.label+': '+f1(c.parsed.y)}}},
    scales:{y:{ticks:{callback:v=>v+'%'}}}}});
  document.getElementById('t2').innerHTML=
   '<thead><tr><th>Línea</th><th>Cercano</th><th>Lejano</th><th>Efecto</th><th>Ventas cerca</th></tr></thead><tbody>'+
-  L.map(l=>{const v=D.h2_apertura[l];return `<tr><td>${l}</td><td>${f1(v.cambio_cerca_pct)}</td>`+
+  LIN.map(l=>{const v=D.h2_apertura[l];return `<tr><td>${l}</td><td>${f1(v.cambio_cerca_pct)}</td>`+
    `<td>${f1(v.cambio_lejos_pct)}</td><td class="${cls(v.efecto_pct)}">${f1(v.efecto_pct)}</td>`+
    `<td>${fN(v.cerca_antes+v.cerca_despues)}</td></tr>`;}).join('')+'</tbody>';
  const pt=(D.h2_apertura.L6||{}).tendencia_previa||[];
@@ -347,8 +414,12 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    verificación de tendencias previas— admite lectura causal, y su magnitud es modesta. La
    Pregunta 3 muestra por qué esa distinción importa.`;
 }).catch(e=>{
+ // el mensaje real, no uno genérico: un "no se pudo cargar" esconde el bug y obliga a
+ // adivinar. Si algo falla, que se vea qué falló.
+ console.error('metro.html:', e);
  document.querySelector('.wrap').insertAdjacentHTML('beforeend',
-  '<div class="nota">No se pudieron cargar los datos del análisis.</div>');
+  '<div class="nota"><b>No se pudieron cargar los datos del análisis.</b><br>'+
+  '<code style="font-size:.85em">'+(e&&e.message?e.message:e)+'</code></div>');
 });
 </script>
 </body>
