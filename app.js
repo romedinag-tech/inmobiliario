@@ -703,8 +703,10 @@ const KPI_MERCADO={
  mkt_ufm2:{lbl:"Precio mediano por m² construido",grp:"Mercado inmobiliario (SII F2890)",u:"UF/m²",dec:1,agg:"wmean",wt:"mkt_ops",sii:true,ramp:"YlOrRd",log:false},
  mkt_brecha:{lbl:"Brecha mercado ÷ avalúo fiscal",grp:"Mercado inmobiliario (SII F2890)",u:"veces",dec:2,agg:"wmean",wt:"mkt_ops",sii:true,ramp:"PuRd",log:false}};
 function quitarMercado(){
- const b=document.querySelector('button[data-tab="mercado"]');if(b)b.remove();
- const p=document.getElementById("p-mercado");if(p)p.remove();}
+ // el análisis del Metro también vive del dato de mercado: se va con él
+ ["mercado","metro-gs"].forEach(t=>{
+   const b=document.querySelector('button[data-tab="'+t+'"]');if(b)b.remove();
+   const p=document.getElementById("p-"+t);if(p)p.remove();});}
 // Los indicadores de mercado se REGISTRAN sólo con el módulo encendido: si no, aparecerían
 // vacíos en Comparar/Ranking/mapa nacional del sitio público.
 function initMercado(){
@@ -1777,6 +1779,7 @@ function activateTab(t){
   if(mvOdMap)setTimeout(()=>mvOdMap.invalidateSize(),100);}
  if(t==="economia"){renderEconomia();if(ecoMap)setTimeout(()=>{ecoMap.invalidateSize();if(ecoLayer&&ecoLayer.getBounds().isValid())ecoMap.fitBounds(ecoLayer.getBounds(),{padding:[10,10]});},80);}
  if(t==="mercado"){renderMercado();if(mktMap)setTimeout(()=>{mktMap.invalidateSize();if(mktLayer&&mktLayer.getBounds().isValid())mktMap.fitBounds(mktLayer.getBounds(),{padding:[10,10]});},80);}
+ if(t==="metro-gs")lazyFrame("if-metro");
  if(t==="tend-demo")lazyFrame("if-demo");
  if(t==="tend-suelo")lazyFrame("if-suelo");
  writeURL();
