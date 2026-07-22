@@ -290,6 +290,7 @@ function finishSelect(){
  const t=currentTab();
  if(t==="ranking")drawRanking();
  else if(t==="economia")renderEconomia();
+ else if(t==="mercado")renderMercado();
  else if(t==="movilidad")renderMovilidad();
  else if(t==="mapa")renderNmap();
  syncTendCity();   // tendencias embebidas siguen la ciudad seleccionada
