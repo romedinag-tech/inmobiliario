@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tendencias demográficas · 2030 / 2035 (Chile)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="tokens.css?v=1"/>
+<style>
+/* Paleta y tipografía: tokens.css (fuente única). */
+*{box-sizing:border-box}body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+.kpi .v,table,th,td{font-variant-numeric:tabular-nums}
+.author-wm{font:600 11px/1 var(--sans);color:rgba(40,55,75,.7);background:rgba(255,255,255,.8);padding:3px 7px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.fs-ctrl a{display:flex!important;align-items:center;justify-content:center;width:30px;height:30px;color:#2b3a4a}.fs-ctrl svg{width:16px;height:16px}
+.leaflet-control-layers,.leaflet-control-layers-toggle{border-radius:9px!important}
+.leaflet-container:fullscreen{height:100%!important;width:100%!important}
+.warn{background:#c55a11;color:#fff;padding:8px 18px;font-weight:600;font-size:.86rem;text-align:center}
+.warn a{color:#fff;text-decoration:underline}
+.nav{background:#173a5a;display:flex;gap:0;flex-wrap:wrap}
+.nav a{color:#cfe0ef;text-decoration:none;padding:10px 18px;font-weight:600;font-size:.9rem;border-bottom:3px solid transparent}
+.nav a.on{color:#fff;border-bottom-color:var(--or);background:#16365a}
+header{background:linear-gradient(135deg,#16365a,#2e5e8c);color:#fff;padding:24px 22px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+h1{margin:0 0 6px;font-size:1.5rem;font-family:var(--font-display);font-weight:700}h2{color:var(--ink);font-size:1.2rem;margin:26px 0 4px;font-family:var(--font-display);font-weight:600}
+.lead{color:var(--mut);max-width:920px}.lead.w{color:#ffe;opacity:.92}
+.panel{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:16px}
+label{display:block;font-size:.74rem;color:var(--mut);font-weight:600;margin-bottom:4px}
+select{font-size:.95rem;padding:8px 10px;border:1px solid var(--line);border-radius:8px;min-width:240px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;color:var(--navy);padding:8px 13px;cursor:pointer;font-weight:600;font-size:.86rem}
+.seg button.on{background:var(--navy);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi .v{font-size:1.4rem;font-weight:800;color:var(--navy)}.kpi .l{color:var(--mut);font-size:.78rem;margin-top:3px}
+.kpi .s{color:var(--or);font-weight:700;font-size:.82rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}@media(max-width:840px){.grid2{grid-template-columns:1fr}}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px}.box h3{margin:0 0 2px;color:var(--navy);font-size:1.02rem;font-family:var(--font-display);font-weight:600}.box p{margin:0 0 8px;color:var(--mut);font-size:.84rem}
+.cwrap{position:relative;height:300px}
+#map,#zmap{height:520px;border-radius:12px;border:1px solid var(--line);margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:.83rem;margin-top:8px}th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}thead th{background:var(--navy);color:#fff}
+.legend{background:#fff;padding:8px 10px;border-radius:8px;box-shadow:0 1px 6px rgba(0,0,0,.2);font-size:.78rem}.legend i{display:inline-block;width:12px;height:12px;margin-right:6px;border-radius:2px}
+.note{background:#fff8f0;border:1px solid #f0d9bf;border-radius:10px;padding:14px 16px;color:#7a4a17;font-size:.86rem;margin-top:14px}
+footer{padding:24px;color:var(--mut);font-size:.82rem;text-align:center}
+.embed .warn,.embed header,.embed .nav,.embed footer{display:none!important}
+.embed .panel>div:first-child{display:none!important}
+.embed body{background:transparent}.embed .wrap{padding-top:6px}
+@media(max-width:560px){
+  header{padding:18px 16px}h1{font-size:1.25rem}
+  .panel{padding:12px 14px}select{min-width:0;width:100%}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .grid2{gap:12px}.cwrap{height:260px}
+  #map,#zmap{height:380px}
+  h2{font-size:1.1rem}.lead{font-size:.86rem}
+}
+</style>
+<link rel="stylesheet" href="theme.css?v=2"/>
+<script>(function(){var p=new URLSearchParams(location.search);if(p.has("embed"))document.documentElement.classList.add("embed");try{var t=p.get("theme")||localStorage.getItem("theme");if(t==="dark")document.documentElement.classList.add("dark");}catch(e){}})();</script>
+</head>
+<body>
+<div class="warn">El visor entrega la <b>tendencia estadística base a escala nacional</b>. La capacidad normativa —alturas, usos y oferta máxima edificable por zona del <b>Plan Regulador</b>— se incorpora en los <b>estudios a medida</b>, donde la proyección se calibra ciudad a ciudad.</div>
+<div class="nav"><a href="index.html" class="on">👥 Tendencias demográficas</a><a href="usos.html">🏗️ Tendencias de uso de suelo</a></div>
+<header><div class="wrap">
+  <h1>Tendencias demográficas · 2030 / 2035</h1>
+  <p class="lead w">Población, vivienda y <b>envejecimiento</b> por comuna y área metropolitana. Demografía anclada a las proyecciones del INE (comunal base 2017 corregida al techo nacional base 2024, Censo 2024). Incluye índice de envejecimiento por zona y estimación del peak poblacional. Estimaciones en revisión.</p>
+</div></header>
+<div class="wrap">
+  <div class="panel">
+    <div><label>Comuna o área metropolitana</label><select id="sel"></select></div>
+    <div><label>Indicador del mapa nacional</label><select id="mapsel">
+      <option value="pobpct">Crecimiento de población 2024→2035 (%)</option>
+      <option value="idxenv">Índice de envejecimiento 2035 (65+/&lt;15)</option>
+      <option value="peak">Año del peak poblacional</option></select></div>
+  </div>
+  <div id="kpis" class="kpis"></div>
+  <div class="grid2">
+    <div class="box"><h3 id="t1">Población</h3><p>Escenarios Alto · Tendencial · Bajo.</p><div class="cwrap"><canvas id="cPob"></canvas></div></div>
+    <div class="box"><h3 id="t2">Índice de envejecimiento</h3><p>Personas de 65+ por cada 100 menores de 15. Barras llenas = observado/estimado INE; claras = proyección.</p><div class="cwrap"><canvas id="cEnv"></canvas></div></div>
+  </div>
+  <div class="note" id="agenote"></div>
+
+  <h2>Envejecimiento por zona<span></span></h2>
+  <p class="lead">Índice de envejecimiento de cada zona censal (personas 65+ por cada 100 menores de 15, igual que el indicador de ciudad). Se estima desde los tramos de edad del Censo 2024 y se <b>re-centra para que el promedio ponderado por población de las zonas coincida con el índice de la ciudad</b>, preservando la variación entre zonas. La proyección 2030/2035 sigue la trayectoria del índice comunal (INE). Provisional.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:8px 0" id="zctrls">
+    <div><label>Año</label><span class="seg" id="zyear"><button data-y="2024" class="on">2024 (obs.)</button><button data-y="2030">2030</button><button data-y="2035">2035</button></span></div>
+  </div>
+  <p id="zmapnote" class="lead" style="font-size:.84rem"></p>
+  <div id="zmap"></div>
+
+  <h2>Distribución etaria · pirámide poblacional<span></span></h2>
+  <p class="lead">Estructura de la población por <b>edad y sexo</b>, de <b>2002 a 2035</b> (proyección INE por comuna). Mueve el año o pulsa <b>▶ Animar</b> para ver la transición: la base se angosta y la cúspide se ensancha a medida que la población envejece — de pirámide a cilindro, hacia una pirámide invertida.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:8px 0" id="pirctrls">
+    <button id="pirplay" style="cursor:pointer;padding:4px 12px;border:1px solid var(--line,#ccc);border-radius:6px;background:transparent;color:inherit;font:inherit">▶ Animar</button>
+    <input type="range" id="piryear" min="2002" max="2035" step="1" value="2024" style="flex:1;min-width:160px"/>
+    <b id="piryearlbl" style="min-width:4ch;font-variant-numeric:tabular-nums">2024</b>
+  </div>
+  <div class="box" id="pirbox"><div class="cwrap"><canvas id="cPir"></canvas></div></div>
+
+  <h2>Mapa nacional demográfico<span></span></h2>
+  <p class="lead">Coroplético por comuna del indicador elegido (provisional).</p>
+  <div id="map"></div>
+</div>
+<footer>Tendencias demográficas (provisionales) · Rodrigo Medina González, Universidad de Concepción · Demografía y envejecimiento: INE Estimaciones y Proyecciones 2002–2035 por comuna (índice 65+/&lt;15) · Censo 2024 (estructura de edad por zona) · Tendencia estadística base; la capacidad normativa (Plan Regulador) se aborda en estudios a medida calibrados ciudad a ciudad.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const NAVY="#16365a",OR="#c55a11",USOS=["Habitacional","Comercio","Educacion","Salud","Oficina","Industria"];
+const fmt=x=>x==null?"s/d":Math.round(x).toLocaleString('es-CL');
+// marca de autor en mapas y gráficos (viaja en capturas)
+function authorWM(map){const c=L.control({position:"bottomleft"});c.onAdd=function(){const d=L.DomUtil.create("div","author-wm");d.textContent="By Rodrigo Medina G.";return d;};c.addTo(map);return c;}
+// tema claro/oscuro (sincronizado con la plataforma via mensaje o localStorage)
+const CARTO_LIGHT="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const CARTO_DARK="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+const TMAPS=[];
+function isDark(){return document.documentElement.classList.contains("dark");}
+function applyMapTheme(){const u=isDark()?CARTO_DARK:CARTO_LIGHT;TMAPS.forEach(m=>{try{m.setUrl(u);}catch(e){}});}
+function applyTheme(th){const d=th==="dark";document.documentElement.classList.toggle("dark",d);try{localStorage.setItem("theme",d?"dark":"light");}catch(e){}if(window.Chart){Chart.defaults.color=d?"#a9c0de":"#5e6e80";Chart.defaults.borderColor=d?"rgba(140,165,200,.14)":"rgba(0,0,0,.06)";}applyMapTheme();if(typeof CURENV!=="undefined"&&CURENV){try{renderEnv(CURENV);}catch(e){}}}
+if(window.Chart){Chart.defaults.color=isDark()?"#a9c0de":"#5e6e80";}
+window.addEventListener("message",function(e){var d=e.data;if(d&&d.__tendTheme)applyTheme(d.__tendTheme);});
+function mapChrome(map){
+ const claro=L.tileLayer(isDark()?CARTO_DARK:CARTO_LIGHT,{attribution:'&copy; CARTO',maxZoom:19});
+ const sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{attribution:'Imagery &copy; Esri, Maxar',maxZoom:19});
+ claro.addTo(map);TMAPS.push(claro);L.control.layers({"Mapa":claro,"Satélite":sat},null,{position:"topright"}).addTo(map);
+ const fc=L.control({position:"topleft"});fc.onAdd=function(){const d=L.DomUtil.create("div","leaflet-bar fs-ctrl");const a=L.DomUtil.create("a","",d);a.href="#";a.title="Pantalla completa";a.setAttribute("aria-label","Pantalla completa");a.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg>';
+   L.DomEvent.on(a,"click",function(e){L.DomEvent.stop(e);const el=map.getContainer();if(!document.fullscreenElement){(el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);}else{(document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);}setTimeout(function(){map.invalidateSize();},250);});return d;};fc.addTo(map);
+ authorWM(map);return {claro,sat};
+}
+if(window.Chart)try{Chart.register({id:"authorWM",afterDraw(c){const a=c.chartArea;if(!a)return;const x=c.ctx;x.save();x.font="600 10px Inter,Segoe UI,sans-serif";x.fillStyle="rgba(125,145,170,.55)";x.textAlign="right";x.textBaseline="top";x.fillText("By Rodrigo Medina G.",a.right,a.top+2);x.restore();}});}catch(e){}
+const AGERAMP=["#2c7bb6","#abd9e9","#ffffbf","#fdae61","#d7191c"];   // joven -> envejecido
+let SUM,GEO,EIDX,byCut={},envByCut={},cPob,cEnv,map,layer,legend,zmap,zlayer,zlegend,ZG,ZBRK=null,zYear="2024";
+let PIRIDX=null,CURPIR=null,cPir=null,PIRMAX=0,pirYear=2024,pirTimer=null;
+Promise.all([
+ fetch("data/proyecciones_comunas.json").then(r=>r.text()).then(t=>JSON.parse(t.replace(/\bNaN\b/g,"null"))),
+ fetch("data/comunas.geojson").then(r=>r.json()),
+ fetch("data/envejecimiento_index.json").then(r=>r.json()),
+ fetch("data/piramide_index.json").then(r=>r.ok?r.json():null).catch(()=>null)
+]).then(([s,g,ei,pi])=>{SUM=s;GEO=g;EIDX=ei;PIRIDX=pi;s.comunas.forEach(c=>byCut[c.cut]=c);
+ (ei.ciudades||[]).forEach(c=>{if(!c.es_area)envByCut[c.id]=c;});
+ const sel=document.getElementById("sel");
+ const addGroup=(lbl,arr)=>{if(!arr.length)return;const grp=document.createElement("optgroup");grp.label=lbl;
+   arr.sort((a,b)=>(b.pob_2024||0)-(a.pob_2024||0)).forEach(c=>{const o=document.createElement("option");o.value=c.cut;o.textContent=c.comuna;grp.appendChild(o);});
+   sel.appendChild(grp);};
+ addGroup("Áreas metropolitanas",s.comunas.filter(c=>c.es_area));
+ addGroup("Comunas",s.comunas.filter(c=>!c.es_area));
+ sel.onchange=()=>load(sel.value); document.getElementById("mapsel").onchange=drawMap;
+ document.querySelectorAll("#zyear button").forEach(b=>b.onclick=()=>{zYear=b.dataset.y;
+   document.querySelectorAll("#zyear button").forEach(x=>x.classList.toggle("on",x===b));recolorZ();});
+ const sly=document.getElementById("piryear");
+ if(sly){sly.oninput=e=>{pirYear=+e.target.value;renderPir(pirYear);};
+   document.getElementById("pirplay").onclick=function(){
+     if(pirTimer){clearInterval(pirTimer);pirTimer=null;this.textContent="▶ Animar";return;}
+     this.textContent="⏸ Pausar";if(+sly.value>=2035){sly.value=2002;pirYear=2002;}
+     pirTimer=setInterval(()=>{let v=+sly.value+1;if(v>2035){clearInterval(pirTimer);pirTimer=null;document.getElementById("pirplay").textContent="▶ Animar";return;}sly.value=v;pirYear=v;renderPir(v);},220);};}
+ initMap(); drawMap();
+ if(!document.documentElement.classList.contains("embed")){ sel.value="8101"; load("8101"); }
+ else if(window.__embedCity){ var o=[...sel.options].some(x=>x.value===window.__embedCity); if(o)sel.value=window.__embedCity; load(window.__embedCity); }
+ else { // embebido sin mensaje aún: espera al padre; si no llega en 1.5s, carga una por defecto (anti-pantalla en blanco ante caché)
+   setTimeout(function(){ if(!window.__embedCity){ sel.value="8101"; load("8101"); } },1500); }
+});
+let CURDEM,CURENV;
+function load(id){CURDEM=null;CURENV=null;
+ loadPir(id);
+ fetch("data/proyecciones/"+id+".json").then(r=>r.text()).then(t=>renderDem(JSON.parse(t.replace(/\bNaN\b/g,"null"))));
+ fetch("data/envejecimiento/"+id+".json").then(r=>r.ok?r.text():null).then(t=>{if(t)renderEnv(JSON.parse(t.replace(/\bNaN\b/g,"null")));else clearEnv();});
+}
+function renderDem(o){CURDEM=o;const d=o.demografia;
+ const p24=d["2024"].pob,p35=d["2035"].tend.pob,v24=d["2024"].viviendas,v35=d["2035"].tend.viviendas;
+ refreshKpis();
+ const yrs=["2024","2030","2035"];
+ const pob=yrs.map(y=>y==="2024"?d[y].pob:d[y].tend.pob),pobA=yrs.map(y=>y==="2024"?d[y].pob:d[y].alto.pob),pobB=yrs.map(y=>y==="2024"?d[y].pob:d[y].bajo.pob);
+ if(cPob)cPob.destroy();
+ cPob=new Chart(document.getElementById("cPob"),{type:"line",data:{labels:yrs,datasets:[
+   {label:"Alto",data:pobA,borderColor:"rgba(31,78,121,.35)",pointRadius:0,borderDash:[4,4]},
+   {label:"Tendencial",data:pob,borderColor:NAVY,backgroundColor:NAVY,borderWidth:3,pointRadius:4},
+   {label:"Bajo",data:pobB,borderColor:"rgba(31,78,121,.35)",pointRadius:0,borderDash:[4,4]}]},
+   options:{maintainAspectRatio:false,plugins:{legend:{position:"bottom"}},scales:{y:{title:{display:true,text:"habitantes"}}}}});
+ document.getElementById("t1").textContent="Población — "+o.comuna+" (escenarios)";
+}
+function renderEnv(o){CURENV=o;refreshKpis();
+ // gráfico tipo histograma del índice por año (observado <=2024 lleno, proyección claro)
+ const yrs=o.anios,idx=o.idx65,J24=yrs.indexOf(2024);
+ const colObs="#16365a",colProj="#9ec3e6";
+ if(cEnv)cEnv.destroy();
+ cEnv=new Chart(document.getElementById("cEnv"),{type:"bar",
+  data:{labels:yrs,datasets:[{label:"Índice 65+/<15",data:idx,
+    backgroundColor:yrs.map((y,i)=>i<=J24?colObs:colProj)}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{display:false},
+    tooltip:{callbacks:{title:it=>String(it[0].label),label:c=>"Índice "+(c.parsed.y==null?"s/d":c.parsed.y)+" (65+ por 100 <15)"}}},
+    scales:{y:{title:{display:true,text:"65+ por cada 100 menores de 15"},beginAtZero:true,
+       grid:{color:c=>c.tick.value===100?"#d73027":"rgba(0,0,0,.06)"}},
+      x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:10,callback:function(v){const y=this.getLabelForValue(v);return y%5===0||y===2024?y:""}}}}}});
+ document.getElementById("t2").textContent="Índice de envejecimiento — "+o.nombre;
+ // nota + peak
+ const pk=o.peak,i24=o.idx65[J24],i35=o.idx65[yrs.indexOf(2035)];
+ const pkTxt=pk.aun_creciente?("posterior a 2035 (aún en crecimiento; en 2035 ≈ "+fmt(o.pob[yrs.indexOf(2035)])+" hab.)"):
+   (pk.anio+" con ≈ "+fmt(pk.pob)+" hab. ("+(pk.delta_pico_pct>=0?"+":"")+pk.delta_pico_pct+"% sobre 2024)");
+ document.getElementById("agenote").innerHTML="<b>Envejecimiento e hito poblacional ("+o.nombre+"):</b> el índice pasa de "+i24+" (2024) a <b>"+i35+"</b> en 2035 — de "+(i24<100?"más niños que adultos mayores":"más adultos mayores que niños")+" a "+(i35>=100?"<b>más adultos mayores que niños</b>":"aún más niños")+". <b>Peak poblacional:</b> "+pkTxt+". <span style='color:#7a4a17'>Índice = personas de 65+ por cada 100 menores de 15 (INE).</span>";
+ // mapa zonal
+ if(o.mapa_zonal){document.getElementById("zctrls").style.display="flex";
+   fetch("data/envejecimiento/zonas_"+o.slug+".geojson").then(r=>r.text()).then(t=>{ZG=JSON.parse(t.replace(/\bNaN\b/g,"null"));
+     // cortes FIJOS por ciudad (mismos intervalos los 3 años) => al envejecer, las zonas se ven más rojas
+     const pool=[];ZG.features.forEach(f=>["idx2024","idx2030","idx2035"].forEach(k=>{if(f.properties[k]!=null)pool.push(f.properties[k]);}));
+     ZBRK=zbreaks(pool);
+     ensureZMap();recolorZ(true);});
+   document.getElementById("zmap").style.display="";}
+ else{document.getElementById("zctrls").style.display="none";document.getElementById("zmap").style.display="none";
+   document.getElementById("zmapnote").textContent="Mapa por zona disponible en áreas metropolitanas y comunas grandes. Para esta unidad, usa el índice de arriba.";ZG=null;}
+}
+function clearEnv(){CURENV=null;if(cEnv)cEnv.destroy();cEnv=null;document.getElementById("agenote").innerHTML="";document.getElementById("t2").textContent="Índice de envejecimiento";document.getElementById("zctrls").style.display="none";document.getElementById("zmap").style.display="none";refreshKpis();}
+// ---- pirámide poblacional (edad x sexo x año, INE 2002-2035) ----
+function loadPir(id){
+ fetch("data/piramide/"+id+".json").then(r=>r.ok?r.json():null).then(o=>{
+   CURPIR=o;const ctr=document.getElementById("pirctrls"),bx=document.getElementById("pirbox");
+   if(!o||!PIRIDX){ctr.style.display="none";bx.style.display="none";if(cPir){cPir.destroy();cPir=null;}return;}
+   ctr.style.display="flex";bx.style.display="";
+   PIRMAX=0;for(let y=0;y<PIRIDX.anios.length;y++)for(let g=0;g<PIRIDX.grupos.length;g++)PIRMAX=Math.max(PIRMAX,o.H[y][g],o.M[y][g]);
+   renderPir(pirYear);
+ }).catch(()=>{document.getElementById("pirctrls").style.display="none";document.getElementById("pirbox").style.display="none";});
+}
+function renderPir(year){
+ if(!CURPIR||!PIRIDX)return;const yi=PIRIDX.anios.indexOf(+year);if(yi<0)return;
+ document.getElementById("piryearlbl").textContent=year;
+ const H=CURPIR.H[yi].map(v=>-v),M=CURPIR.M[yi];
+ if(!cPir){
+  cPir=new Chart(document.getElementById("cPir"),{type:"bar",
+   data:{labels:PIRIDX.grupos,datasets:[
+     {label:"Hombres",data:H,backgroundColor:NAVY},
+     {label:"Mujeres",data:M,backgroundColor:OR}]},
+   options:{indexAxis:"y",maintainAspectRatio:false,animation:{duration:120},
+    plugins:{legend:{position:"bottom"},
+      tooltip:{callbacks:{title:it=>"Edad "+it[0].label,label:c=>c.dataset.label+": "+fmt(Math.abs(c.parsed.x))}}},
+    scales:{x:{stacked:true,min:-PIRMAX,max:PIRMAX,ticks:{callback:v=>fmt(Math.abs(v))},title:{display:true,text:"población"}},
+            y:{stacked:true,reverse:true,title:{display:true,text:"grupo de edad"}}}}});
+ } else {
+  cPir.data.datasets[0].data=H;cPir.data.datasets[1].data=M;
+  cPir.options.scales.x.min=-PIRMAX;cPir.options.scales.x.max=PIRMAX;cPir.update();
+ }
+ document.getElementById("t2");// (sin título extra)
+}
+function refreshKpis(){const dem=CURDEM,env=CURENV;if(!dem)return;const d=dem.demografia;
+ const p24=d["2024"].pob,p35=d["2035"].tend.pob,v24=d["2024"].viviendas,v35=d["2035"].tend.viviendas;
+ const rows=[
+  ["Población 2035",fmt(p35),(p35>=p24?"+":"")+(100*(p35/p24-1)).toFixed(1)+"% vs 2024"],
+  ["Viviendas 2035",fmt(v35),(100*(v35/v24-1)).toFixed(1)+"% vs 2024"]];
+ if(env){const yrs=env.anios,J35=yrs.indexOf(2035),i24=env.idx65[yrs.indexOf(2024)],i35=env.idx65[J35],pk=env.peak;
+   rows.push(["Índice envejec. 2035",i35,"era "+i24+" en 2024"]);
+   rows.push(["Peak poblacional",pk.aun_creciente?">2035":pk.anio,pk.aun_creciente?"aún creciente":((pk.delta_pico_pct>=0?"+":"")+pk.delta_pico_pct+"% vs 2024")]);}
+ else rows.push(["Demanda viv. nueva",fmt(v35-v24),"2024→2035"]);
+ document.getElementById("kpis").innerHTML=rows.map(([l,v,s])=>'<div class="kpi"><div class="v">'+v+'</div><div class="l">'+l+'</div><div class="s">'+s+'</div></div>').join("");
+}
+// ---- mapa zonal de envejecimiento ----
+function ensureZMap(){if(zmap)return;zmap=L.map("zmap",{preferCanvas:true}).setView([-36.8,-73.05],11);
+ mapChrome(zmap);}
+function zbreaks(vals){const v=vals.filter(x=>x!=null).sort((a,b)=>a-b);if(!v.length)return null;
+ const q=p=>v[Math.min(v.length-1,Math.floor(p*(v.length-1)))];return [q(.2),q(.4),q(.6),q(.8)];}
+function zcolor(x,brk){if(x==null)return "#d8dde3";if(!brk)return AGERAMP[2];for(let i=0;i<4;i++)if(x<=brk[i])return AGERAMP[i];return AGERAMP[4];}
+function zfield(){return zYear==="2024"?"idx2024":zYear==="2030"?"idx2030":"idx2035";}
+function recolorZ(fit){if(!ZG||!zmap)return;const fld=zfield();
+ const brk=ZBRK;   // intervalos fijos (idénticos para 2024/2030/2035) para comparar años
+ if(zlayer)zmap.removeLayer(zlayer);
+ zlayer=L.geoJSON(ZG,{style:f=>{const v=f.properties[fld];return {weight:.4,color:"#888",fillOpacity:.82,fillColor:zcolor(v,brk)};},
+   onEachFeature:(f,l)=>{const p=f.properties;
+     l.bindPopup("<b>Zona "+p.zona+"</b> · "+(p.comuna||"")+"<br>Índice de envejecimiento (65+/<15):<br>2024: <b>"+(p.idx2024==null?"s/d":p.idx2024)+"</b><br>2030: "+(p.idx2030==null?"s/d":p.idx2030)+"<br>2035: "+(p.idx2035==null?"s/d":p.idx2035)+(p.pob!=null?"<br>Población: "+fmt(p.pob):""));}}).addTo(zmap);
+ if(zlegend)zmap.removeControl(zlegend);zlegend=L.control({position:"bottomright"});
+ zlegend.onAdd=()=>{const d=L.DomUtil.create("div","legend");
+   d.innerHTML="<b>Índice de envejecimiento</b><br><span style='color:#5b6b7b;font-size:.72rem'>escala fija (compara años)</span><br>"+(brk?("<i style='background:"+AGERAMP[0]+"'></i>≤ "+Math.round(brk[0])+"<br>"+[1,2,3].map(i=>"<i style='background:"+AGERAMP[i]+"'></i>"+Math.round(brk[i-1])+"–"+Math.round(brk[i])).join("<br>")+"<br><i style='background:"+AGERAMP[4]+"'></i>> "+Math.round(brk[3])):"sin datos")+"<br><i style='background:#d8dde3'></i>s/d";return d;};
+ zlegend.addTo(zmap);
+ document.getElementById("zmapnote").innerHTML="<b>"+(CURENV?CURENV.nombre:"")+"</b> — índice por zona en "+zYear+(zYear!=="2024"?" (proyectado)":" (observado, Censo 2024)")+". Más rojo = más envejecido (más adultos mayores por niño).";
+ if(fit){try{zmap.fitBounds(zlayer.getBounds(),{padding:[8,8]});}catch(e){}}
+ setTimeout(()=>zmap.invalidateSize(),60);
+}
+// ---- mapa nacional ----
+function initMap(){map=L.map("map",{preferCanvas:true}).setView([-38,-72],5);
+ mapChrome(map);}
+function valFor(c,mode){if(!c)return null;
+ if(mode==="pobpct")return c.pob_2024?100*(c.pob_2035/c.pob_2024-1):null;
+ const e=envByCut[c.cut];if(!e)return null;
+ if(mode==="idxenv")return e.idx65_2035;
+ if(mode==="peak")return e.aun_creciente?2036:e.peak_anio;
+ return null;}
+function colGrow(v){if(v==null)return "#d8dde3";if(v<0)return "#d73027";if(v<10)return "#fee08b";if(v<20)return "#a6d96a";if(v<35)return "#66bd63";return "#1a9850";}
+function colIdx(v){if(v==null)return "#d8dde3";if(v<60)return AGERAMP[0];if(v<100)return AGERAMP[1];if(v<150)return AGERAMP[2];if(v<220)return AGERAMP[3];return AGERAMP[4];}
+function colPeak(v){if(v==null)return "#d8dde3";if(v>=2036)return "#1a9850";if(v>=2033)return "#a6d96a";if(v>=2028)return "#fee08b";if(v>=2020)return "#fdae61";return "#d73027";}
+function colFor(v,mode){return mode==="pobpct"?colGrow(v):mode==="idxenv"?colIdx(v):colPeak(v);}
+function drawMap(){const mode=document.getElementById("mapsel").value;
+ if(layer)map.removeLayer(layer);
+ layer=L.geoJSON(GEO,{style:f=>{const v=valFor(byCut[f.properties.cut],mode);return {color:"#9aa7b4",weight:.3,fillColor:colFor(v,mode),fillOpacity:.82};},
+  onEachFeature:(f,l)=>{const c=byCut[f.properties.cut];const v=valFor(c,mode);const e=envByCut[f.properties.cut];
+   let txt;
+   if(mode==="pobpct")txt="Población 2024→2035: <b>"+(v!=null?(v>=0?"+":"")+v.toFixed(1)+"%":"s/d")+"</b>";
+   else if(mode==="idxenv")txt="Índice envejec. 2035: <b>"+(v!=null?v:"s/d")+"</b> (65+/<15)";
+   else txt="Peak poblacional: <b>"+(e?(e.aun_creciente?"posterior a 2035":e.peak_anio):"s/d")+"</b>";
+   l.bindPopup("<b>"+(c?c.comuna:f.properties.comuna)+"</b><br>"+txt);}
+ }).addTo(map);
+ if(legend)map.removeControl(legend);legend=L.control({position:"bottomright"});
+ legend.onAdd=()=>{const d=L.DomUtil.create("div","legend");
+  if(mode==="pobpct")d.innerHTML='<b>Crecimiento pob. 2024→2035</b><br><i style="background:#d73027"></i>&lt;0%<br><i style="background:#fee08b"></i>0–10%<br><i style="background:#a6d96a"></i>10–20%<br><i style="background:#66bd63"></i>20–35%<br><i style="background:#1a9850"></i>&gt;35%';
+  else if(mode==="idxenv")d.innerHTML='<b>Índice envejec. 2035</b><br><i style="background:'+AGERAMP[0]+'"></i>&lt;60<br><i style="background:'+AGERAMP[1]+'"></i>60–100<br><i style="background:'+AGERAMP[2]+'"></i>100–150<br><i style="background:'+AGERAMP[3]+'"></i>150–220<br><i style="background:'+AGERAMP[4]+'"></i>&gt;220';
+  else d.innerHTML='<b>Año del peak poblacional</b><br><i style="background:#d73027"></i>antes de 2020<br><i style="background:#fdae61"></i>2020–2027<br><i style="background:#fee08b"></i>2028–2032<br><i style="background:#a6d96a"></i>2033–2035<br><i style="background:#1a9850"></i>posterior a 2035';
+  return d;};
+ legend.addTo(map);}
+</script>
+<script>
+/* Embebido en la plataforma: el menú global de ciudades manda la selección, y la página
+   reporta su alto para que el iframe fluya como una sección nativa (sin scroll interno). */
+(function(){if(!new URLSearchParams(location.search).has("embed"))return;
+ function postH(){try{parent.postMessage({__tendH:true,h:document.documentElement.scrollHeight+24},"*");}catch(e){}}
+ window.__postH=postH;
+ window.addEventListener("message",function(e){var d=e.data;if(!d||!d.__tend||!d.demo)return;
+   if(d.theme)applyTheme(d.theme);
+   window.__embedCity=d.demo;var sel=document.getElementById("sel");
+   if(sel&&[...sel.options].some(function(o){return o.value===d.demo;}))sel.value=d.demo;
+   try{load(d.demo);}catch(err){}
+   setTimeout(postH,500);setTimeout(postH,1400);});
+ try{new ResizeObserver(postH).observe(document.body);}catch(e){}
+ window.addEventListener("load",function(){setTimeout(postH,500);setTimeout(postH,1500);});
+})();
+</script>
+</body></html>
