@@ -111,6 +111,18 @@
     <div class="cw"><canvas id="c2"></canvas></div>
     <table id="t2"></table>
     <div class="hallazgo" id="h2-txt"></div>
+
+    <h3 style="margin:26px 0 4px">Trayectoria año a año, por anillo</h3>
+    <p>El resultado anterior compara dos promedios; esta serie muestra el camino. Cada anillo
+    parte en <b>100 el año 2015</b> — no en su precio real, que es muy distinto entre ellos —
+    para que lo único visible sea <b>cuál crece más rápido</b>. Al estar en UF, la inflación ya
+    está descontada: lo que sube es valor real.</p>
+    <div class="seg" id="trayvar" style="margin:6px 0 10px">
+      <button class="on" data-tv="departamento">Solo departamentos</button>
+      <button data-tv="todas">Toda la vivienda</button>
+    </div>
+    <div class="cw" style="height:340px"><canvas id="c8"></canvas></div>
+    <div class="hallazgo" id="h8-txt"></div>
   </section>
 
   <!-- H3 -->
@@ -299,6 +311,45 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    lejano se mantuvo estable (${pt.map(p=>p.anio+': '+p.dif_pct+'%').join(' · ')}), sin
    separarse progresivamente. Eso es lo que habilita leer el cambio posterior como efecto y no
    como continuación de una tendencia que ya venía.`;
+
+ /* ---- H8: trayectoria año a año por anillo ---- */
+ // un color por anillo; el de control (>1500 m) en gris y punteado, para que se lea como
+ // referencia y no como una curva más
+ const COL8={'0-400 m':'#1E4B9B','400-800 m':'#E87722','800-1500 m':'#7B3F9D','>1500 m':GREY};
+ let trayVar='departamento', c8=null;
+ function dibujarTray(){
+  const S8=D.h8_trayectoria[trayVar], anios=S8[A[0]].map(x=>x.anio);
+  const ds=A.map(a=>({label:a,data:S8[a].map(x=>x.indice),
+    borderColor:COL8[a],backgroundColor:COL8[a],
+    borderDash:a==='>1500 m'?[6,4]:null,borderWidth:a==='>1500 m'?2:3,
+    tension:.25,pointRadius:3,spanGaps:true}));
+  if(c8)c8.destroy();
+  c8=new Chart(document.getElementById('c8'),{type:'line',data:{labels:anios,datasets:ds},
+   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:false},
+    tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y+
+      ' ('+(c.parsed.y>=100?'+':'')+(c.parsed.y-100).toFixed(0)+'% real desde 2015)'}}},
+    scales:{y:{title:{display:true,text:'índice de UF/m² (2015 = 100)'}}}}});
+ }
+ dibujarTray();
+ document.querySelectorAll('#trayvar button').forEach(b=>b.onclick=()=>{
+   trayVar=b.dataset.tv;
+   document.querySelectorAll('#trayvar button').forEach(x=>x.classList.toggle('on',x===b));
+   dibujarTray();});
+ const S8d=D.h8_trayectoria.departamento;
+ const fin=a=>{const v=S8d[a].filter(x=>x.indice!=null); return v.length?v[v.length-1].indice:null;};
+ const cerca=fin('0-400 m'), lejos=fin('>1500 m');
+ document.getElementById('h8-txt').innerHTML=
+  `<b>Las curvas se separan, y la brecha es grande.</b> En departamentos, el anillo de 0-400 m
+   llegó a <b>${cerca}</b> (${(cerca-100).toFixed(0)}% real acumulado desde 2015) mientras el
+   sector a más de 1.500 m se quedó en <b>${lejos}</b> (${(lejos-100).toFixed(0)}%).
+   <b>${(cerca-lejos).toFixed(0)} puntos de diferencia</b> en once años, con los tres anillos
+   cercanos moviéndose juntos y el lejano claramente por debajo.
+   <br><br>Nótese también que <b>todas las curvas se aplanan después de 2021</b>, igual que el
+   índice nacional de precios: el freno del mercado fue transversal y no borró la diferencia
+   por accesibilidad, que se mantiene hasta el final del período.
+   <br><br><i>Por qué el botón de departamentos:</i> si junto al Metro se vendieran cada vez más
+   unidades chicas, el precio por m² subiría por cambio de mezcla y no por apreciación. Mirando
+   un solo tipo de propiedad esa objeción desaparece, y el resultado se sostiene igual.`;
 
  /* ---- H3 ---- */
  const S=D.h3_anticipacion.serie;
