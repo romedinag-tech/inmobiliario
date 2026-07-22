@@ -153,6 +153,17 @@
     <div class="cw"><canvas id="c7"></canvas></div>
     <table id="t7"></table>
     <div class="hallazgo" id="h7-txt"></div>
+
+    <h3 style="margin:26px 0 4px">Superficie de densidad sobre la red</h3>
+    <p>Intensidad continua a partir de las <b id="n-calor">—</b> manzanas del Gran Santiago, sin
+    bordes administrativos que distraigan: lo que se ve es cómo cambia la densidad al alejarse de
+    las estaciones. La red va superpuesta en blanco.</p>
+    <div class="seg" id="calorvar" style="margin:6px 0 10px">
+      <button class="on" data-cv="rel">Exceso sobre su propia comuna</button>
+      <button data-cv="abs">Densidad bruta</button>
+    </div>
+    <div id="mapcalor" style="height:560px;border:1px solid var(--line);border-radius:8px"></div>
+    <div class="hallazgo" id="calor-txt"></div>
   </section>
 
   <!-- H5 -->
@@ -189,6 +200,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
@@ -440,6 +452,54 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    <br><br>Es la advertencia central de esta sección: <b>cambio y nivel responden preguntas
    distintas</b>. Donde la ciudad ya se construyó, el Metro se lee en el nivel; donde se está
    construyendo, en el cambio.`;
+
+ /* ---- SUPERFICIE DE CALOR: densidad continua sobre la red ---- */
+ // No es coropleta a propósito: el color por polígono hace leer bordes comunales donde lo que
+ // importa es la distancia a la estación. El kernel entrega un campo continuo.
+ fetch('data/mercado/metro_calor.json?v=1').then(x=>x.json()).then(K=>{
+  document.getElementById('n-calor').textContent=fN(K.meta.n);
+  const mc=L.map('mapcalor',{scrollWheelZoom:false,preferCanvas:true}).setView([-33.45,-70.66],11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    {attribution:'© OpenStreetMap · © CARTO',maxZoom:18}).addTo(mc);
+  // la red en blanco encima del calor: sirve de referencia sin competir con la intensidad
+  const red=L.layerGroup().addTo(mc);
+  D.estaciones.filter(s=>s.e===1).forEach(s=>{
+   L.circleMarker([s.y,s.x],{radius:3,color:'#fff',weight:1,fillColor:'#fff',fillOpacity:.9})
+    .bindPopup('<b>'+(s.n||'')+'</b><br>Línea '+s.l.replace('L','')).addTo(red);});
+  let capa=null, calorVar='rel';
+  function dibujarCalor(){
+   if(capa){mc.removeLayer(capa);capa=null;}
+   // 'rel' = veces la densidad del sector lejano de su comuna; 'abs' = hab/ha
+   const pts=K.puntos
+     .map(p=>{const v=calorVar==='rel'?p[3]:p[2]; return v==null?null:[p[0],p[1],v];})
+     .filter(Boolean);
+   // normalizar el peso a 0-1 con un tope robusto, si no un puñado de valores extremos
+   // apagan todo el resto del mapa
+   const vals=pts.map(p=>p[2]).sort((a,b)=>a-b);
+   const tope=vals[Math.floor(vals.length*0.97)]||1;
+   const datos=pts.map(p=>[p[0],p[1],Math.min(1,p[2]/tope)]);
+   capa=L.heatLayer(datos,{radius:14,blur:18,minOpacity:.25,maxZoom:14,
+     gradient:{0.0:'#12263f',0.3:'#1f6feb',0.5:'#37b6a9',0.7:'#f5b335',1.0:'#d8262c'}}).addTo(mc);
+   red.eachLayer(l=>l.bringToFront());
+   document.getElementById('calor-txt').innerHTML = calorVar==='rel'
+    ? `<b>Con el gradiente centro-periferia descontado, lo que queda encendido sigue los ejes de
+       la red.</b> Cada manzana se mide como cuántas veces más densa es que el sector alejado de
+       su propia comuna, así que el centro deja de dominar la imagen por el solo hecho de ser
+       central. Los corredores calientes coinciden con las líneas — y también aparecen manchas
+       intensas <i>sin</i> estación cerca, que son densificaciones de otro origen: normativa
+       permisiva, vivienda social, proyectos aislados.`
+    : `<b>La densidad bruta muestra sobre todo que el centro es denso</b>, algo que sería cierto
+       con o sin Metro. Sirve para reconocer la forma de la ciudad, pero no para atribuirle nada
+       a la red: por eso la vista por defecto es la del exceso sobre la propia comuna.`;
+  }
+  dibujarCalor();
+  document.querySelectorAll('#calorvar button').forEach(b=>b.onclick=()=>{
+    calorVar=b.dataset.cv;
+    document.querySelectorAll('#calorvar button').forEach(x=>x.classList.toggle('on',x===b));
+    dibujarCalor();});
+ }).catch(e=>{console.error('calor:',e);
+   document.getElementById('mapcalor').innerHTML=
+     '<div class="nota">No se pudo cargar la superficie de densidad: '+(e.message||e)+'</div>';});
 
  /* ---- H5: densificación intercensal ---- */
  const D5=D.h5_densificacion;
