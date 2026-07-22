@@ -128,9 +128,24 @@
     <div class="hallazgo" id="h3-txt"></div>
   </section>
 
+  <!-- H7 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 5</p>
+    <h2>¿Es más densa la ciudad junto al Metro?</h2>
+    <p>Las preguntas sobre densidad que siguen miden <b>cambio</b> entre censos. Esta mide el
+    <b>nivel</b>: cuántos habitantes y viviendas por hectárea hay hoy en cada anillo, con el
+    mismo procedimiento de la Pregunta 1 — contra el sector a más de 1.500 m de la misma comuna.</p>
+    <p>La distinción importa. Una comuna consolidada puede tener la población detenida y aun así
+    ser mucho más densa junto a sus estaciones: el efecto sobre la forma urbana ya ocurrió,
+    a veces hace décadas, y solo se ve en el nivel.</p>
+    <div class="cw"><canvas id="c7"></canvas></div>
+    <table id="t7"></table>
+    <div class="hallazgo" id="h7-txt"></div>
+  </section>
+
   <!-- H5 -->
   <section class="q">
-    <p class="pregunta">Pregunta 5 — la medición directa</p>
+    <p class="pregunta">Pregunta 6 — la medición directa</p>
     <h2>¿Cuánta gente y cuántas viviendas se sumaron junto al Metro?</h2>
     <p>Las preguntas anteriores usan compraventas. Esta usa los <b>dos censos</b>: la misma
     manzana contada en 2017 y en 2024. No es una inferencia sobre el mercado, es el conteo de
@@ -145,7 +160,7 @@
 
   <!-- H4 -->
   <section class="q">
-    <p class="pregunta">Pregunta 6</p>
+    <p class="pregunta">Pregunta 7</p>
     <h2>¿Densifica o solo encarece?</h2>
     <p>Composición de lo que se vende en cada anillo: qué proporción son departamentos y qué tan
     reciente es la construcción. Distingue si alrededor del Metro se construyó ciudad nueva o si
@@ -340,6 +355,41 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    existente, se construyó ciudad nueva y más densa. Con la salvedad de la Pregunta 4: parte de
    esa densidad es previa al Metro y explica por dónde se trazó.`;
 
+ /* ---- H7: NIVEL de densidad (no el cambio) ---- */
+ const D7=D.h7_densidad_nivel;
+ new Chart(document.getElementById('c7'),{type:'bar',
+  data:{labels:A,datasets:[
+   {label:'Habitantes por hectárea',data:A.map(a=>(D7[a]||{}).hab_ha),backgroundColor:NAVY},
+   {label:'Viviendas por hectárea',data:A.map(a=>(D7[a]||{}).viv_ha),backgroundColor:OR}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+   tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y}}},
+   scales:{y:{title:{display:true,text:'densidad 2024 (por hectárea)'}}}}});
+ document.getElementById('t7').innerHTML=
+  '<thead><tr><th>Anillo</th><th>hab/ha</th><th>viv/ha</th><th>Densidad vs &gt;1500 m</th>'+
+  '<th>Viviendas vs &gt;1500 m</th><th>Manzanas</th></tr></thead><tbody>'+
+  A.map(a=>{const v=D7[a];if(!v)return '';
+   return `<tr><td>${a}</td><td>${v.hab_ha}</td><td>${v.viv_ha}</td>`+
+    `<td class="${cls(v.vs_lejos_pct)}">${f1(v.vs_lejos_pct)}</td>`+
+    `<td class="${cls(v.viv_vs_lejos_pct)}">${f1(v.viv_vs_lejos_pct)}</td>`+
+    `<td>${fN(v.manzanas)}</td></tr>`;}).join('')+'</tbody>';
+ const C7=Object.values(D.h7_por_comuna||{}).filter(x=>x.veces).sort((a,b)=>b.veces-a.veces);
+ const lc=C7.find(x=>/LAS CONDES/i.test(x.comuna)), n0=D7['0-400 m'], nf=D7['>1500 m'];
+ document.getElementById('h7-txt').innerHTML=
+  `<b>Junto al Metro la ciudad es sustancialmente más densa: ${n0.hab_ha} hab/ha a menos de
+   400 m contra ${nf.hab_ha} más allá de 1.500 m.</b> Comparando dentro de cada comuna —para
+   que no pese que las estaciones estén en comunas ya densas— la diferencia es de
+   <b>${f1(n0.vs_lejos_pct)}</b> en habitantes y <b>${f1(n0.viv_vs_lejos_pct)}</b> en viviendas.
+   Otra vez las viviendas van muy por delante de la población.
+   ${lc?`<br><br><b>El caso que obliga a mirar el nivel y no solo el cambio es ${lc.comuna}</b>,
+   que encabeza todo el Gran Santiago con <b>${lc.veces}× más densidad</b> junto a sus
+   estaciones (${lc.hab_ha_cerca} contra ${lc.hab_ha_lejos} hab/ha) — <b>pese a que su
+   población junto al Metro no creció</b> entre censos. El efecto sobre la forma urbana está
+   consolidado hace décadas: medido solo por variación intercensal, esta comuna parecería no
+   tener ninguna relación entre Metro y densidad.`:''}
+   <br><br>Es la advertencia central de esta sección: <b>cambio y nivel responden preguntas
+   distintas</b>. Donde la ciudad ya se construyó, el Metro se lee en el nivel; donde se está
+   construyendo, en el cambio.`;
+
  /* ---- H5: densificación intercensal ---- */
  const D5=D.h5_densificacion;
  new Chart(document.getElementById('c5'),{type:'bar',
@@ -409,7 +459,7 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    El gradiente se calcula además <b>dentro de cada tipo de propiedad</b>, porque cerca del Metro
    se vende mayoritariamente departamento y lejos mayoritariamente casa: sin esa separación, la
    distinta mezcla de productos se confundiría con el efecto del Metro.
-   <br><br><b>Qué NO permite concluir.</b> Las Preguntas 1 y 6 son fotografías de un momento y no
+   <br><br><b>Qué NO permite concluir.</b> Las Preguntas 1, 5 y 7 son fotografías de un momento y no
    distinguen causa de selección. Solo la Pregunta 3 —antes y después de una inauguración, con
    verificación de tendencias previas— admite lectura causal, y su magnitud es modesta. La
    Pregunta 4 muestra por qué esa distinción importa.`;
