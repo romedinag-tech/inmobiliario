@@ -203,6 +203,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
+// SIN ANIMACIÓN. Esta página se ve dentro de un iframe y en secciones que aún no están a la
+// vista: ahí requestAnimationFrame no corre, la animación queda congelada en su primer
+// fotograma y las barras se dibujan con altura CERO — el eje se calcula bien, así que el
+// gráfico parece correcto pero muestra todo en nada. Sin animación se dibuja el valor final
+// de inmediato, visible o no.
+Chart.defaults.animation=false;
+Chart.defaults.animations={};
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const NAVY=cssv('--navy')||'#16365a', OR=cssv('--or')||'#C55A11',
       GREY=cssv('--mut-2')||'#7C8AA0', GREEN='#1e8449', RED='#c0392b';
@@ -333,7 +340,8 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
   const S8=D.h8_trayectoria[trayVar], anios=S8[A[0]].map(x=>x.anio);
   const ds=A.map(a=>({label:a,data:S8[a].map(x=>x.indice),
     borderColor:COL8[a],backgroundColor:COL8[a],
-    borderDash:a==='>1500 m'?[6,4]:null,borderWidth:a==='>1500 m'?2:3,
+    // [] y no null: setLineDash(null) lanza excepción y corta el resto del script
+    borderDash:a==='>1500 m'?[6,4]:[],borderWidth:a==='>1500 m'?2:3,
     tension:.25,pointRadius:3,spanGaps:true}));
   if(c8)c8.destroy();
   c8=new Chart(document.getElementById('c8'),{type:'line',data:{labels:anios,datasets:ds},
