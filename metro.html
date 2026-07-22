@@ -112,6 +112,33 @@
     <div class="hallazgo" id="h4-txt"></div>
   </section>
 
+  <!-- H5 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 5 — la medición directa</p>
+    <h2>¿Cuánta gente y cuántas viviendas se sumaron junto al Metro?</h2>
+    <p>Las preguntas anteriores usan compraventas. Esta usa los <b>dos censos</b>: la misma
+    manzana contada en 2017 y en 2024. No es una inferencia sobre el mercado, es el conteo de
+    cuánta población y cuántas viviendas hay efectivamente.</p>
+    <p>La unidad es la <b>manzana censal</b>, de decenas de metros, así que un anillo de 400 m
+    queda nítido — con zonas censales, que pueden medir un kilómetro, el anillo se difuminaría.
+    La columna <i>exceso</i> descuenta lo que creció el sector alejado de la misma comuna.</p>
+    <div class="cw"><canvas id="c5"></canvas></div>
+    <table id="t5"></table>
+    <div class="hallazgo" id="h5-txt"></div>
+  </section>
+
+  <!-- H6 -->
+  <section class="q">
+    <p class="pregunta">Pregunta 6</p>
+    <h2>Cada comuna contra sí misma</h2>
+    <p>Aquí está la comparación en su forma más directa: dentro de <b>una misma comuna</b>,
+    cómo cambió la población de las manzanas cercanas al Metro frente a las alejadas, y cuánto
+    sobreprecio por m² tienen las primeras. Vitacura se compara con Vitacura; Puente Alto con
+    Puente Alto. Ninguna comuna se compara con otra.</p>
+    <table id="t6"></table>
+    <div class="hallazgo" id="h6-txt"></div>
+  </section>
+
   <section class="q">
     <h2>Cómo leer estos resultados</h2>
     <div class="nota" id="metodo"></div>
@@ -205,12 +232,17 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
  document.getElementById('h3-txt').innerHTML=
   `<b>El sobreprecio ya existía antes del anuncio: ${f1(H3.brecha_antes_pct)}.</b>
    Y el anuncio en sí no agregó nada medible (${f1(H3.efecto_pct)}).
-   <br><br>La conclusión es incómoda pero es la más importante del ejercicio: <b>el Metro se
-   planifica donde el valor y la densidad ya son altos</b>, no al revés. Por eso una parte del
-   sobreprecio que la Pregunta 1 muestra junto a la red existente no es efecto del Metro, sino
-   el reflejo de que el Metro fue trazado por los corredores que ya concentraban actividad.
-   Separar ambas cosas exige justamente comparaciones antes/después como la Pregunta 2, no
-   fotografías de un momento.
+   <br><br><b>Ese resultado admite dos lecturas y el dato no permite elegir entre ellas.</b>
+   Puede ser <i>selección</i>: el Metro se traza por corredores que ya concentraban valor y
+   densidad. O puede ser <i>anticipación de larga data</i>: la red estratégica se conoce hace
+   años en el mundo inmobiliario, y el anuncio presidencial no aporta información nueva — solo
+   confirma que esa línea entra en prioridad de ejecución. Bajo esa segunda lectura, el mercado
+   llevaba tiempo capitalizando un trazado ya previsible, y por eso la fecha del anuncio no
+   marca ningún quiebre.
+   <br><br>Lo que sí queda establecido, y vale para ambas lecturas: <b>una fotografía del
+   sobreprecio junto a la red existente no puede atribuirse al Metro</b>. Distinguir causa de
+   preexistencia exige seguir los mismos lugares en el tiempo — que es lo que hacen las
+   preguntas siguientes.
    <br><br><i>Cautela:</i> la serie es ruidosa (va de ${Math.min(...S.map(s=>s.dif_pct)).toFixed(1)}%
    a ${Math.max(...S.map(s=>s.dif_pct)).toFixed(1)}% entre años), porque el grupo cercano a
    estaciones futuras y lejano de la red actual es acotado. La magnitud exacta no es confiable;
@@ -240,6 +272,64 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
    la edad de lo que se transa es mucho: alrededor de las estaciones no solo subió el precio de lo
    existente, se construyó ciudad nueva y más densa. Con la salvedad de la Pregunta 3: parte de
    esa densidad es previa al Metro y explica por dónde se trazó.`;
+
+ /* ---- H5: densificación intercensal ---- */
+ const D5=D.h5_densificacion;
+ new Chart(document.getElementById('c5'),{type:'bar',
+  data:{labels:A,datasets:[
+   {label:'Población 2017→2024',data:A.map(a=>(D5[a]||{}).pob_pct),backgroundColor:NAVY},
+   {label:'Viviendas 2017→2024',data:A.map(a=>(D5[a]||{}).viv_pct),backgroundColor:OR}]},
+  options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},
+   tooltip:{callbacks:{label:c=>c.dataset.label+': '+f1(c.parsed.y)}}},
+   scales:{y:{title:{display:true,text:'variación entre censos'},ticks:{callback:v=>v+'%'}}}}});
+ document.getElementById('t5').innerHTML=
+  '<thead><tr><th>Anillo</th><th>Población</th><th>Viviendas</th><th>Exceso pob.</th>'+
+  '<th>Exceso viv.</th><th>Manzanas</th></tr></thead><tbody>'+
+  A.map(a=>{const v=D5[a];if(!v)return '';
+   const pp=x=>x==null?'—':(x>=0?'+':'')+x.toFixed(1)+' pp';
+   return `<tr><td>${a}</td><td class="${cls(v.pob_pct)}">${f1(v.pob_pct)}</td>`+
+    `<td class="${cls(v.viv_pct)}">${f1(v.viv_pct)}</td>`+
+    `<td class="${cls(v.exceso_pob_pp)}">${pp(v.exceso_pob_pp)}</td>`+
+    `<td class="${cls(v.exceso_viv_pp)}">${pp(v.exceso_viv_pp)}</td>`+
+    `<td>${fN(v.manzanas)}</td></tr>`;}).join('')+'</tbody>';
+ const a0=D5['0-400 m'], aF=D5['>1500 m'];
+ document.getElementById('h5-txt').innerHTML=
+  `<b>Junto al Metro se densificó de verdad, no solo subió el precio.</b> A menos de 400 m la
+   población creció ${f1(a0.pob_pct)} y las viviendas ${f1(a0.viv_pct)} entre ambos censos;
+   más allá de 1.500 m, ${f1(aF.pob_pct)} y ${f1(aF.viv_pct)}. Descontando lo que creció el
+   sector alejado de cada comuna, el exceso junto a estaciones es de
+   <b>${a0.exceso_pob_pp>=0?'+':''}${a0.exceso_pob_pp} puntos en población</b> y
+   <b>${a0.exceso_viv_pp>=0?'+':''}${a0.exceso_viv_pp} puntos en viviendas</b>.
+   <br><br><b>Y hay un dato que merece atención propia: las viviendas crecieron
+   ${(a0.viv_pct-a0.pob_pct).toFixed(1)} puntos más que la población.</b> Se construyeron muchas
+   más unidades que habitantes se sumaron. Eso apunta a hogares más pequeños —o a unidades de
+   inversión sin residentes— y es exactamente el patrón del departamento compacto junto a
+   estación. Densificar en viviendas no equivale a densificar en gente.`;
+
+ /* ---- H6: comuna por comuna ---- */
+ const H6=D.h6_por_comuna.filter(x=>x.pob_cerca_pct!=null);
+ const dif=x=>x.pob_cerca_pct-x.pob_lejos_pct;
+ document.getElementById('t6').innerHTML=
+  '<thead><tr><th>Comuna</th><th>Pob. cerca</th><th>Pob. lejos</th><th>Diferencia</th>'+
+  '<th>Sobreprecio m²</th></tr></thead><tbody>'+
+  H6.map(x=>`<tr><td>${x.comuna}</td><td class="${cls(x.pob_cerca_pct)}">${f1(x.pob_cerca_pct)}</td>`+
+   `<td class="${cls(x.pob_lejos_pct)}">${f1(x.pob_lejos_pct)}</td>`+
+   `<td class="${cls(dif(x))}">${(dif(x)>=0?'+':'')+dif(x).toFixed(1)} pp</td>`+
+   `<td class="${cls(x.sobreprecio_pct)}">${f1(x.sobreprecio_pct)}</td></tr>`).join('')+'</tbody>';
+ const top=H6[0], pa=H6.find(x=>/PUENTE ALTO/i.test(x.comuna));
+ document.getElementById('h6-txt').innerHTML=
+  `<b>El efecto del Metro no es uno solo: depende enteramente de dónde.</b>
+   En ${top.comuna} las manzanas junto a estaciones crecieron ${f1(top.pob_cerca_pct)} mientras
+   las alejadas ${f1(top.pob_lejos_pct)} — ${(dif(top)).toFixed(0)} puntos de diferencia dentro
+   de la misma comuna, con un sobreprecio de ${f1(top.sobreprecio_pct)} por m². Es el patrón de
+   torres en el pericentro.
+   ${pa?`<br><br>En el extremo opuesto, <b>${pa.comuna}</b> tiene varias estaciones y el
+   sobreprecio junto a ellas es <b>${f1(pa.sobreprecio_pct)}</b>: negativo. Ahí el Metro no
+   valoriza. Tener estación no basta — lo que se capitaliza es la accesibilidad a un centro de
+   empleo, y en la periferia lejana esa accesibilidad sigue siendo pobre aunque pase el tren.`:''}
+   <br><br>Por eso hablar de "el efecto del Metro" como un número único es engañoso. Un plan de
+   inversión debería preguntarse dónde el Metro habilita densificación y dónde solo agrega un
+   servicio de transporte sin transformar el suelo.`;
 
  document.getElementById('metodo').innerHTML=
   `<b>Datos.</b> ${fN(D.meta.ventas)} compraventas de vivienda inscritas ante el SII en las 34
