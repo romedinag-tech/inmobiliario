@@ -268,8 +268,8 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
  const LC={L1:'#D8262C',L2:'#F5B335',L3:'#6E4B3A',L4:'#1E4B9B',L4A:'#4FB3E8',
            L5:'#2E9E5B',L6:'#7B3F9D',L7:'#E87722',L8:'#9AA3AE',L9:'#9AA3AE'};
  const map=L.map('map',{scrollWheelZoom:false}).setView([-33.45,-70.66],11);
- L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-   {attribution:'© OpenStreetMap · © CARTO',maxZoom:18}).addTo(map);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+   {attribution:'Tiles © Esri',maxZoom:18,maxNativeZoom:16}).addTo(map);
  const capa=L.layerGroup().addTo(map);
  function pintar(modo){
   capa.clearLayers();
@@ -502,8 +502,8 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
  fetch('data/mercado/metro_calor.json?v=1').then(x=>x.json()).then(K=>{
   document.getElementById('n-calor').textContent=fN(K.meta.n);
   const mc=L.map('mapcalor',{scrollWheelZoom:false,preferCanvas:true}).setView([-33.45,-70.66],11);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    {attribution:'© OpenStreetMap · © CARTO',maxZoom:18}).addTo(mc);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    {attribution:'Tiles © Esri',maxZoom:18,maxNativeZoom:16}).addTo(mc);
   // la red en blanco encima del calor: sirve de referencia sin competir con la intensidad
   const red=L.layerGroup().addTo(mc);
   D.estaciones.filter(s=>s.e===1).forEach(s=>{
