@@ -252,7 +252,7 @@ const f1=x=>(x==null?'—':(x>=0?'+':'')+x.toFixed(1)+'%');
 const cls=x=>x==null?'nulo':(x>0.5?'pos':(x<-0.5?'neg':'nulo'));
 const fN=x=>x==null?'—':x.toLocaleString('es-CL');
 
-fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
+fetch('data/mercado/metro_impacto.json?v=2').then(r=>r.json()).then(D=>{
  const A=D.meta.anillos;
  document.getElementById('n-ventas').textContent=fN(D.meta.ventas);
 
@@ -499,7 +499,7 @@ fetch('data/mercado/metro_impacto.json?v=1').then(r=>r.json()).then(D=>{
  /* ---- SUPERFICIE DE CALOR: densidad continua sobre la red ---- */
  // No es coropleta a propósito: el color por polígono hace leer bordes comunales donde lo que
  // importa es la distancia a la estación. El kernel entrega un campo continuo.
- fetch('data/mercado/metro_calor.json?v=1').then(x=>x.json()).then(K=>{
+ fetch('data/mercado/metro_calor.json?v=2').then(x=>x.json()).then(K=>{
   document.getElementById('n-calor').textContent=fN(K.meta.n);
   const mc=L.map('mapcalor',{scrollWheelZoom:false,preferCanvas:true}).setView([-33.45,-70.66],11);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
